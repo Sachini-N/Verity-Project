@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { ClipboardCheck, Users, Settings, BookOpen } from 'lucide-react';
+import { ClipboardCheck, Users, Settings, BookOpen, Bell } from 'lucide-react';
 import NotificationCenter from '../NotificationCenter';
 
 const managerNav = [
@@ -7,6 +7,7 @@ const managerNav = [
   { label: 'Users', path: '/manager/users', icon: Users },
   { label: 'Groups', path: '/manager/groups', icon: Users },
   { label: 'Modules', path: '/manager/modules', icon: BookOpen },
+  { label: 'Announcements', path: '/manager/announcements', icon: Bell },
   { label: 'System', path: '/manager/settings', icon: Settings },
 ];
 
@@ -15,15 +16,15 @@ export default function ManagerNav() {
 
   const user = (() => {
     try { 
-      const data = JSON.parse(localStorage.getItem('user') || '{}');
+      const data = JSON.parse(sessionStorage.getItem('user') || '{}');
       return data.user || data;
     } catch { return {}; }
   })();
   const initials = user?.name?.split(' ').map((n: string) => n[0]).join('').toUpperCase() || 'MG';
 
   const handleSignOut = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    sessionStorage.removeItem('token');
+    sessionStorage.removeItem('user');
     window.location.href = '/login';
   };
 

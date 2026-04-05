@@ -37,6 +37,7 @@ model User {
   assignmentsCreated      Assignment[]
   assignmentSubmissions   AssignmentSubmission[] @relation("StudentAssignmentSubmissions")
   notifications           Notification[]
+  announcementReads       AnnouncementRead[]
 
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -103,15 +104,31 @@ model ProjectMember {
 
 model Announcement {
   id        String   @id @default(uuid())
-  projectId String
-  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId String?  // Optional for global announcements
+  project   Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
   title     String
   content   String
+  category  String   @default("General") // Urgent, Academic, General
+  targetAudience String @default("All") // All Modules, SE3050, etc.
   isPinned  Boolean  @default(false)
   authorId  String   // User ID
+  attachmentUrl String?
+
+  reads     AnnouncementRead[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model AnnouncementRead {
+  id             String       @id @default(uuid())
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  announcementId String
+  announcement   Announcement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+  readAt         DateTime     @default(now())
+
+  @@unique([userId, announcementId])
 }
 
 model Sprint {

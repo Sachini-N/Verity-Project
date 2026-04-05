@@ -6,7 +6,7 @@ import axios from 'axios';
 const StudentProfile = () => {
   const localUser = (() => {
     try { 
-      const data = JSON.parse(localStorage.getItem('user') || '{}');
+      const data = JSON.parse(sessionStorage.getItem('user') || '{}');
       return data.user || data;
     } catch { return {}; }
   })();
@@ -27,7 +27,7 @@ const StudentProfile = () => {
       if (resp.data.success) {
         setUser(resp.data.user);
         // Optionally update local storage here if you want:
-        // localStorage.setItem('user', JSON.stringify(resp.data.user));
+        // sessionStorage.setItem('user', JSON.stringify(resp.data.user));
       }
     } catch (e) {
       console.error(e);
@@ -66,9 +66,9 @@ const StudentProfile = () => {
       if (resp.data.success) {
         setUser(resp.data.user);
         // Refresh local storage so Navbar updates immediately
-        const stored = JSON.parse(localStorage.getItem('user') || '{}');
+        const stored = JSON.parse(sessionStorage.getItem('user') || '{}');
         stored.user = resp.data.user;
-        localStorage.setItem('user', JSON.stringify(stored));
+        sessionStorage.setItem('user', JSON.stringify(stored));
         setIsEditing(false);
       }
     } catch (e: any) {

@@ -31,7 +31,7 @@ export default function WeeklyReport() {
 
   const fetchReports = async () => {
     try {
-      const stored = localStorage.getItem('user');
+      const stored = sessionStorage.getItem('user');
       const parsed = stored ? JSON.parse(stored) : null;
       const user = parsed?.user || parsed;
 
@@ -61,7 +61,7 @@ export default function WeeklyReport() {
   const onSubmit = async (data: FormData) => {
     setLoading(true);
     try {
-      const stored = localStorage.getItem('user');
+      const stored = sessionStorage.getItem('user');
       const parsed = stored ? JSON.parse(stored) : null;
       const user = parsed?.user || parsed;
 

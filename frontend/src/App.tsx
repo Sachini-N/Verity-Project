@@ -16,6 +16,7 @@ import TeamManagement from './pages/Module1/TeamManagement';
 import AnnouncementBoard from './pages/Module1/AnnouncementBoard';
 import LecturerDashboard from './pages/Module1/LecturerDashboard';
 import StudentProjectDashboard from './pages/Module1/StudentProjectDashboard';
+import Announcements from './pages/Announcements';
 import StudentProjectOverview from './pages/Module1/StudentProjectOverview';
 import StudentGlobalAssignments from './pages/Module1/StudentGlobalAssignments';
 import StudentCalendar from './pages/Module1/StudentCalendar';
@@ -72,6 +73,7 @@ function App() {
           <Route path="projects/new" element={<ProjectCreateForm />} />
           <Route path="assignments" element={<StudentGlobalAssignments />} />
           <Route path="calendar" element={<StudentCalendar />} />
+          <Route path="announcements" element={<Announcements />} />
           <Route path="profile" element={<StudentProfile />} />
 
           {/* Unified Project Dashboard */}
@@ -112,6 +114,7 @@ function App() {
         <Route path="/lecturer" element={<LecturerLayout />}>
           <Route path="dashboard" element={<LecturerDashboard />} />
           <Route path="assignments" element={<LecturerAssignments />} />
+          <Route path="announcements" element={<Announcements />} />
           <Route path="profile" element={<LecturerProfile />} />
           
           {/* Main Lecturer Group List View */}
@@ -141,6 +144,7 @@ function App() {
           <Route path="users" element={<ManagerUserDirectory />} />
           <Route path="groups" element={<ManagerGroupDirectory />} />
           <Route path="modules" element={<ManagerModules />} />
+          <Route path="announcements" element={<Announcements />} />
           <Route path="settings" element={<ManagerSystemSettings />} />
           
           <Route index element={<Navigate to="approvals" replace />} />

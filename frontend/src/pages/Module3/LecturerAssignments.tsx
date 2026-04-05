@@ -31,7 +31,7 @@ export default function LecturerAssignments() {
   const fetchAssignments = async () => {
     try {
       setLoading(true);
-      const stored = localStorage.getItem('user');
+      const stored = sessionStorage.getItem('user');
       const parsed = stored ? JSON.parse(stored) : null;
       const user = parsed?.user || parsed;
       const url = user?.id ? `${API}/lecturer?createdById=${user.id}` : `${API}/lecturer`;
@@ -180,7 +180,7 @@ function AssignmentBuilder({ onCancel, onSave }: { onCancel: () => void, onSave:
   useEffect(() => {
     const fetchModules = async () => {
       try {
-        const stored = localStorage.getItem('user');
+        const stored = sessionStorage.getItem('user');
         const parsed = stored ? JSON.parse(stored) : null;
         const user = parsed?.user || parsed;
         const url = user?.id ? `http://localhost:5000/api/academic/modules?lecturerId=${user.id}` : 'http://localhost:5000/api/academic/modules';
@@ -218,7 +218,7 @@ function AssignmentBuilder({ onCancel, onSave }: { onCancel: () => void, onSave:
   const onSubmit = async (formData: any) => {
     setSubmitting(true);
     try {
-      const stored = localStorage.getItem('user');
+      const stored = sessionStorage.getItem('user');
       const parsed = stored ? JSON.parse(stored) : null;
       const user = parsed?.user || parsed;
       

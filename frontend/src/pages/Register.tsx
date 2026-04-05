@@ -120,8 +120,8 @@ const Register = () => {
                 throw new Error(data.message || 'Registration failed');
             }
 
-            localStorage.setItem('token', data.token);
-            localStorage.setItem('user', JSON.stringify(data));
+            sessionStorage.setItem('token', data.token);
+            sessionStorage.setItem('user', JSON.stringify(data));
             if (role === 'STUDENT') {
                 navigate('/student/projects');
             } else {

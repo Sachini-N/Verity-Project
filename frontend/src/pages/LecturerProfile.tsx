@@ -1,17 +1,28 @@
 import { Mail, Phone, MapPin, Github, Linkedin, Award, Book, Star, Users, Briefcase, ChevronRight, FileText, X } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
+
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  indexNumber?: string;
+  phone?: string;
+  github?: string;
+  linkedin?: string;
+  skills?: string;
+}
 
 const LecturerProfile = () => {
   const localUser = (() => {
     try { 
-      const data = JSON.parse(localStorage.getItem('user') || '{}');
+      const data = JSON.parse(sessionStorage.getItem('user') || '{}');
       return data.user || data;
     } catch { return {}; }
   })();
   
-  const [user, setUser] = useState<any>(localUser);
+  const [user, setUser] = useState<User>(localUser as User);
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -65,7 +76,7 @@ const LecturerProfile = () => {
         setUser(resp.data.user);
         setIsEditing(false);
       }
-    } catch (e: any) {
+    } catch (e: AxiosError<{ message: string }>) {
       console.error("Update error", e);
       alert(e.response?.data?.message || 'Failed to update profile');
     } finally {
@@ -252,7 +263,7 @@ const LecturerProfile = () => {
       {isEditing && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-3xl w-full max-w-lg p-8 shadow-2xl relative">
-            <button onClick={() => setIsEditing(false)} className="absolute top-6 right-6 text-slate-400 hover:text-slate-700 transition">
+            <button onClick={() => setIsEditing(false)} className="absolute top-6 right-6 text-slate-400 hover:text-slate-700 transition" title="Close modal">
               <X className="w-6 h-6" />
             </button>
             <h2 className="text-2xl font-black text-slate-800 mb-6 flex items-center gap-2">Edit Lecturer Profile</h2>

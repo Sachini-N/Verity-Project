@@ -38,8 +38,8 @@ const Login = () => {
             }
 
             // Save token and user data
-            localStorage.setItem('token', data.token);
-            localStorage.setItem('user', JSON.stringify(data));
+            sessionStorage.setItem('token', data.token);
+            sessionStorage.setItem('user', JSON.stringify(data));
 
             // Route to the correct portal based on role
             const role = data.role || data.user?.role;

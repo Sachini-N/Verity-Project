@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Users, ShieldAlert, Download, UploadCloud } from 'lucide-react';
+import { Users, ShieldAlert, Download, UploadCloud, Bell } from 'lucide-react';
 import { useModule } from '../../context/ModuleContext';
 import { useState, useEffect } from 'react';
 import NotificationCenter from '../NotificationCenter';
@@ -7,6 +7,7 @@ import NotificationCenter from '../NotificationCenter';
 const lecturerNav = [
   { label: 'My Groups', path: '/lecturer/projects', icon: Users },
   { label: 'Assignments', path: '/lecturer/assignments', icon: UploadCloud },
+  { label: 'Announcements', path: '/lecturer/announcements', icon: Bell },
   { label: 'Risk Alerts', path: '/lecturer/alerts', icon: ShieldAlert },
   { label: 'Grading Export', path: '/lecturer/export', icon: Download },
 ];
@@ -18,7 +19,7 @@ export default function LecturerNav() {
   useEffect(() => {
     const fetchModules = async () => {
       try {
-        const stored = localStorage.getItem('user');
+        const stored = sessionStorage.getItem('user');
         const parsed = stored ? JSON.parse(stored) : null;
         const user = parsed?.user || parsed;
         const url = user?.id ? `http://localhost:5000/api/academic/modules?lecturerId=${user.id}` : 'http://localhost:5000/api/academic/modules';
@@ -41,15 +42,15 @@ export default function LecturerNav() {
 
   const user = (() => {
     try { 
-      const data = JSON.parse(localStorage.getItem('user') || '{}');
+      const data = JSON.parse(sessionStorage.getItem('user') || '{}');
       return data.user || data;
     } catch { return {}; }
   })();
   const initials = user?.name?.split(' ').map((n: string) => n[0]).join('').toUpperCase() || 'LR';
 
   const handleSignOut = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    sessionStorage.removeItem('token');
+    sessionStorage.removeItem('user');
     window.location.href = '/login';
   };
 
