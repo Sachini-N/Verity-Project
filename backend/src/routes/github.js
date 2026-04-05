@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { PrismaClient } = require('@prisma/client');
 const axios = require('axios');
+const { notifyProjectMembers } = require('../services/notificationService');
 
 const prisma = new PrismaClient();
 
@@ -191,6 +192,15 @@ router.post('/link', async (req, res) => {
         }
 
         res.status(200).json({ success: true, repo });
+
+        // Notify project members about repo link
+        notifyProjectMembers(projectId, {
+            type: 'GITHUB_LINKED',
+            title: 'GitHub Repo Linked',
+            message: `GitHub repository ${owner}/${repoName} has been linked to your project.`,
+            link: `/student/projects/${projectId}/github`,
+            metadata: {}
+        }).catch(() => {});
     } catch (error) {
         console.error('Github Link Error:', error);
         if (error.code === 'P2002') {
@@ -307,6 +317,16 @@ router.post('/sync/:projectId', async (req, res) => {
             branchesFetched: targetBranches.length
         });
 
+        // Notify project members if new commits were found
+        if (newCommits > 0) {
+            notifyProjectMembers(projectId, {
+                type: 'GITHUB_SYNCED',
+                title: 'New Commits Synced',
+                message: `${newCommits} new commit${newCommits > 1 ? 's' : ''} synced from GitHub.`,
+                link: `/student/projects/${projectId}/github`,
+                metadata: { newCommits }
+            }).catch(() => {});
+        }
     } catch (error) {
         console.error("Github Sync Error:", error);
         res.status(500).json({ success: false, message: 'Server error syncing repo', error: error.message });

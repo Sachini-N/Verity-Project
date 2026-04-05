@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { PrismaClient } = require('@prisma/client');
+const { notifyProjectMembers } = require('../services/notificationService');
 
 const prisma = new PrismaClient();
 
@@ -27,6 +28,15 @@ router.post('/create', async (req, res) => {
         });
 
         res.status(201).json({ success: true, submission });
+
+        // Notify project members about new submission
+        notifyProjectMembers(projectId, {
+            type: 'SUBMISSION_CREATED',
+            title: 'New Submission',
+            message: `A new submission "${milestone}" has been created.`,
+            link: `/student/projects/${projectId}/submissions`,
+            metadata: { submissionId: submission.id }
+        }).catch(() => {});
     } catch (error) {
         console.error("Submission Error:", error);
         res.status(500).json({ success: false, message: 'Server error creating submission' });

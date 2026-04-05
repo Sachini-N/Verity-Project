@@ -18,6 +18,7 @@ import LecturerDashboard from './pages/Module1/LecturerDashboard';
 import StudentProjectDashboard from './pages/Module1/StudentProjectDashboard';
 import StudentProjectOverview from './pages/Module1/StudentProjectOverview';
 import StudentGlobalAssignments from './pages/Module1/StudentGlobalAssignments';
+import StudentCalendar from './pages/Module1/StudentCalendar';
 import StudentProfile from './pages/StudentProfile';
 
 // Module 2
@@ -70,6 +71,7 @@ function App() {
           <Route path="projects" element={<ProjectList />} />
           <Route path="projects/new" element={<ProjectCreateForm />} />
           <Route path="assignments" element={<StudentGlobalAssignments />} />
+          <Route path="calendar" element={<StudentCalendar />} />
           <Route path="profile" element={<StudentProfile />} />
 
           {/* Unified Project Dashboard */}

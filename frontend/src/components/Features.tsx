@@ -1,246 +1,139 @@
-import { BrainCircuit, Fingerprint, FolderSync, Network } from 'lucide-react';
+import { BrainCircuit, FolderSync, Network, Fingerprint, Target, Zap } from 'lucide-react';
 import { motion } from 'framer-motion';
+import Tilt from 'react-parallax-tilt';
 
 const Features = () => {
+    const containerVariants = {
+        hidden: { opacity: 0 },
+        show: {
+            opacity: 1,
+            transition: { staggerChildren: 0.1 }
+        }
+    };
+    
+    const itemVariants = {
+        hidden: { opacity: 0, y: 20 },
+        show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } }
+    };
+
     return (
-        <section id="features" className="w-full max-w-[1200px] px-6 mx-auto lg:px-8 py-32 z-10">
+        <section id="features" className="w-full max-w-[1400px] px-6 mx-auto lg:px-8 py-32 z-10">
 
             <div className="text-center mb-20 max-w-3xl mx-auto">
-                <h2 className="text-4xl md:text-5xl font-black tracking-tight text-slate-900 mb-6">
-                    Everything you need to <span className="text-emerald-600">verify.</span>
+                <h2 className="text-4xl md:text-5xl font-black tracking-tighter text-slate-800 mb-6 drop-shadow-sm">
+                    Everything you need to <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-teal-500">verify.</span>
                 </h2>
-                <p className="text-xl text-slate-600 font-medium">
-                    A suite of academic tools designed to seamlessly integrate into student workflows while providing lecturers with absolute visibility.
+                <p className="text-lg text-slate-500 font-medium">
+                    A suite of academic tools designed to seamlessly integrate into student workflows while providing lecturers with absolute visibility powered by Aura Intelligence.
                 </p>
             </div>
 
-            {/* Bento Box Grid Layout */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 auto-rows-[300px]">
+            {/* Asymmetrical Bento 2.0 Grid (Clarity Mode) */}
+            <motion.div 
+                variants={containerVariants}
+                initial="hidden"
+                whileInView="show"
+                viewport={{ once: true, margin: "-50px" }}
+                className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-8"
+            >
 
-                {/* Large Feature 1 */}
-                <motion.div
-                    initial={{ opacity: 0, y: 30 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true, margin: "-50px" }}
-                    transition={{ duration: 0.6 }}
-                    className="md:col-span-2 relative p-10 bg-white border border-slate-200/60 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden group hover:shadow-xl hover:border-emerald-200 transition-all flex flex-col md:flex-row items-center justify-between"
-                >
-                    <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-gradient-to-br from-emerald-100 to-teal-50 rounded-full blur-3xl -mr-20 -mt-20 opacity-50 group-hover:opacity-100 transition-opacity" />
-
-                    <div className="relative z-10 flex flex-col h-full justify-between w-full max-w-sm mb-8 md:mb-0">
-                        <div className="w-14 h-14 bg-emerald-50 border border-emerald-100 rounded-2xl flex items-center justify-center mb-6">
-                            <BrainCircuit className="w-6 h-6 text-emerald-600" />
-                        </div>
-                        <div>
-                            <h3 className="text-2xl font-bold tracking-tight text-slate-900 mb-3">AI Fairness Intelligence</h3>
-                            <p className="text-slate-600 font-medium leading-relaxed">
-                                Proprietary rule engine detects unequal contributions, flags last-minute work, and calculates irrefutable contribution matrices.
-                            </p>
-                        </div>
-                    </div>
-
-                    {/* Custom Animated UI Representation */}
-                    <div className="relative z-10 w-full max-w-[280px] h-[200px] flex items-center justify-center">
-                        <div className="relative w-40 h-40 flex items-center justify-center">
-                            {/* Outer dashed ring spinning */}
-                            <motion.div
-                                animate={{ rotate: 360 }}
-                                transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-                                className="absolute inset-0 border-[2px] border-dashed border-emerald-200 rounded-full"
-                            />
-                            {/* Inner dashed ring spinning opposite */}
-                            <motion.div
-                                animate={{ rotate: -360 }}
-                                transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
-                                className="absolute inset-6 border border-dashed border-teal-300 rounded-full"
-                            />
-
-                            {/* Pulsing Core */}
-                            <motion.div
-                                animate={{ scale: [1, 1.15, 1], opacity: [0.8, 1, 0.8] }}
-                                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                                className="w-14 h-14 bg-gradient-to-tr from-emerald-500 to-teal-400 rounded-full shadow-[0_0_30px_rgba(59,130,246,0.4)] flex items-center justify-center"
-                            >
-                                <div className="w-6 h-6 bg-white rounded-full blur-[2px] opacity-80" />
-                            </motion.div>
-
-                            {/* Orbiting data node */}
-                            <motion.div
-                                animate={{ rotate: 360 }}
-                                transition={{ duration: 5, repeat: Infinity, ease: "linear" }}
-                                className="absolute inset-0"
-                            >
-                                <div className="w-4 h-4 bg-white border border-emerald-100 rounded-full absolute -top-2 left-1/2 -translate-x-1/2 shadow-lg shadow-emerald-200 flex items-center justify-center">
-                                    <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-ping" />
+                {/* Hero Feature 1 - Spans 2 cols */}
+                <motion.div variants={itemVariants} className="md:col-span-2 lg:col-span-2">
+                    <Tilt tiltMaxAngleX={3} tiltMaxAngleY={3} scale={1.01} transitionSpeed={2500} className="h-full block">
+                        <div className="relative h-full p-8 rounded-[2rem] bg-white border border-slate-100 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.05),inset_0_1px_1px_white] overflow-hidden group cursor-pointer hover:shadow-[0_15px_40px_-5px_rgba(129,140,248,0.1)] transition-all flex flex-col justify-between min-h-[340px]">
+                            <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
+                                <BrainCircuit className="w-40 h-40 text-indigo-500 drop-shadow-md group-hover:scale-110 transition-transform duration-500" />
+                            </div>
+                            
+                            <div className="relative z-10">
+                                <div className="inline-flex p-4 bg-indigo-50 text-indigo-600 rounded-2xl mb-6 shadow-sm border border-indigo-100 group-hover:scale-105 group-hover:shadow-[0_5px_15px_-3px_rgba(99,102,241,0.3)] transition-all">
+                                    <BrainCircuit strokeWidth={2.5} className="w-8 h-8" />
                                 </div>
-                            </motion.div>
-                        </div>
-                    </div>
-                </motion.div>
-
-                {/* Small Feature 1 */}
-                <motion.div
-                    initial={{ opacity: 0, y: 30 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true, margin: "-50px" }}
-                    transition={{ duration: 0.6, delay: 0.1 }}
-                    className="md:col-span-1 relative p-8 bg-white border border-slate-200/60 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden group hover:shadow-xl hover:border-emerald-200 transition-all"
-                >
-                    <div className="absolute top-0 right-0 w-[200px] h-[200px] bg-gradient-to-br from-emerald-100 to-fuchsia-50 rounded-full blur-2xl -mr-10 -mt-10 opacity-50 group-hover:opacity-100 transition-opacity" />
-
-                    {/* Git Sync Visual */}
-                    <div className="absolute top-6 right-4 lg:right-8 z-0 w-32 h-32 flex items-center justify-center pointer-events-none opacity-80 scale-90 sm:scale-100">
-                        <div className="relative w-full h-full max-w-[160px] flex items-center">
-                            <svg className="absolute w-full h-full text-emerald-200" preserveAspectRatio="none">
-                                <path d="M 0 64 L 120 64" stroke="currentColor" strokeWidth="2" fill="none" strokeDasharray="4 4" />
-                                <path d="M 60 64 Q 80 64 80 30" stroke="currentColor" strokeWidth="2" fill="none" strokeDasharray="4 4" />
-                            </svg>
-                            <motion.div
-                                animate={{ scale: [1, 1.2, 1] }}
-                                transition={{ duration: 2, repeat: Infinity }}
-                                className="absolute left-[0px] top-[56px] w-4 h-4 bg-emerald-500 rounded-full border-2 border-white z-10 shadow-sm"
-                            />
-                            <motion.div
-                                animate={{ scale: [1, 1.25, 1] }}
-                                transition={{ duration: 2, repeat: Infinity, delay: 0.5 }}
-                                className="absolute left-[60px] top-[54px] w-5 h-5 bg-fuchsia-500 rounded-full border-2 border-white z-10 shadow-sm"
-                            />
-                            <motion.div
-                                animate={{ scale: [1, 1.2, 1] }}
-                                transition={{ duration: 2, repeat: Infinity, delay: 1 }}
-                                className="absolute left-[120px] top-[56px] w-4 h-4 bg-emerald-500 rounded-full border-2 border-white z-10 shadow-sm"
-                            />
-                            <motion.div
-                                animate={{ scale: [1, 1.2, 1] }}
-                                transition={{ duration: 2, repeat: Infinity, delay: 1.5 }}
-                                className="absolute left-[72px] top-[22px] w-4 h-4 bg-fuchsia-400 rounded-full border-2 border-white z-10 shadow-sm"
-                            />
-                        </div>
-                    </div>
-
-                    <div className="relative z-10 flex flex-col h-full justify-between">
-                        <div className="w-12 h-12 bg-emerald-50 border border-emerald-100 rounded-2xl flex items-center justify-center mb-6">
-                            <FolderSync className="w-5 h-5 text-emerald-600" />
-                        </div>
-                        <div>
-                            <h3 className="text-xl font-bold tracking-tight text-slate-900 mb-2">Native Git Sync</h3>
-                            <p className="text-sm text-slate-600 font-medium">
-                                Live GitHub API integration maps commits directly to academic modules.
-                            </p>
-                        </div>
-                    </div>
-                </motion.div>
-
-                {/* Small Feature 2 */}
-                <motion.div
-                    initial={{ opacity: 0, y: 30 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true, margin: "-50px" }}
-                    transition={{ duration: 0.6, delay: 0.2 }}
-                    className="md:col-span-1 relative p-8 bg-white border border-slate-200/60 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden group hover:shadow-xl hover:border-emerald-200 transition-all"
-                >
-                    <div className="absolute top-0 right-0 w-[200px] h-[200px] bg-gradient-to-br from-emerald-100 to-teal-50 rounded-full blur-2xl -mr-10 -mt-10 opacity-50 group-hover:opacity-100 transition-opacity" />
-
-                    {/* Group Formation Visual */}
-                    <div className="absolute top-4 right-4 lg:right-8 z-0 w-32 h-32 flex items-center justify-center pointer-events-none opacity-90 scale-90 sm:scale-100">
-                        <div className="relative w-24 h-24 flex items-center justify-center">
-                            <motion.div
-                                animate={{ rotate: 360 }}
-                                transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
-                                className="absolute inset-0 border-[1.5px] border-dashed border-emerald-200 rounded-full"
-                            >
-                                <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-emerald-400 rounded-full shadow-sm" />
-                                <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-teal-400 rounded-full shadow-sm" />
-                                <div className="absolute top-1/2 -translate-y-1/2 -left-1.5 w-3 h-3 bg-emerald-300 rounded-full shadow-sm" />
-                            </motion.div>
-
-                            {/* Pulsing connections */}
-                            <motion.div
-                                animate={{ opacity: [0.3, 0.7, 0.3], scale: [0.9, 1.05, 0.9] }}
-                                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                                className="absolute inset-4 rounded-full bg-emerald-50"
-                            />
-
-                            <div className="relative w-10 h-10 bg-gradient-to-tr from-emerald-500 to-teal-400 rounded-full shadow-[0_0_15px_rgba(16,185,129,0.3)] flex items-center justify-center z-10 border-2 border-white">
-                                <div className="w-4 h-4 bg-white rounded-full opacity-90 blur-[1px]" />
+                                <h3 className="text-2xl font-black tracking-tight text-slate-800 mb-2">Aura Fairness Engine</h3>
+                                <p className="text-slate-500 font-medium leading-relaxed max-w-sm">
+                                    Proprietary rule engine detects unequal contributions, flags last-minute work, and calculates irrefutable contribution matrices in real-time.
+                                </p>
                             </div>
                         </div>
-                    </div>
-
-                    <div className="relative z-10 flex flex-col h-full justify-between">
-                        <div className="w-12 h-12 bg-emerald-50 border border-emerald-100 rounded-2xl flex items-center justify-center mb-6">
-                            <Network className="w-5 h-5 text-emerald-600" />
-                        </div>
-                        <div>
-                            <h3 className="text-xl font-bold tracking-tight text-slate-900 mb-2">Group Formation</h3>
-                            <p className="text-sm text-slate-600 font-medium">
-                                Find peers, send invites, and auto-generate grading IDs securely.
-                            </p>
-                        </div>
-                    </div>
+                    </Tilt>
                 </motion.div>
 
-                {/* Large Feature 2 */}
-                <motion.div
-                    initial={{ opacity: 0, y: 30 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true, margin: "-50px" }}
-                    transition={{ duration: 0.6, delay: 0.3 }}
-                    className="md:col-span-2 relative p-10 bg-slate-900 border border-slate-800 rounded-[2rem] shadow-[0_8px_40px_rgb(0,0,0,0.12)] overflow-hidden group hover:shadow-2xl hover:border-slate-700 transition-all flex flex-col md:flex-row items-center justify-between"
-                >
-                    <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-gradient-to-br from-emerald-500/20 to-emerald-500/20 rounded-full blur-3xl -mr-20 -mt-20 opacity-50 group-hover:opacity-100 transition-opacity" />
-
-                    <div className="relative z-10 flex flex-col h-full justify-between mb-8 md:mb-0">
-                        <div className="w-14 h-14 bg-slate-800 border border-slate-700 rounded-2xl flex items-center justify-center mb-6">
-                            <Fingerprint className="w-6 h-6 text-emerald-400" />
+                {/* Vertical Feature 2 */}
+                <motion.div variants={itemVariants} className="md:col-span-1 lg:col-span-1">
+                    <Tilt tiltMaxAngleX={4} tiltMaxAngleY={4} scale={1.02} transitionSpeed={2500} className="h-full block">
+                        <div className="h-full p-8 rounded-[2rem] bg-white border border-slate-100 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.05),inset_0_1px_1px_white] hover:-translate-y-1 hover:shadow-lg transition-all group cursor-pointer flex flex-col min-h-[340px]">
+                            <div className="p-3 bg-teal-50 text-teal-600 rounded-xl mb-auto shadow-sm border border-teal-100 self-start group-hover:rotate-12 transition-transform">
+                                <FolderSync strokeWidth={2.5} className="w-6 h-6" />
+                            </div>
+                            <div className="mt-8">
+                                <h3 className="text-xl font-black tracking-tight text-slate-800 mb-2">Native Git Sync</h3>
+                                <p className="text-sm text-slate-500 font-medium leading-relaxed">
+                                    Live GitHub API maps branch commits directly into specific academic milestones automatically.
+                                </p>
+                            </div>
                         </div>
-                        <div className="max-w-md">
-                            <h3 className="text-2xl font-bold tracking-tight text-white mb-3">Academic Hierarchy</h3>
-                            <p className="text-slate-400 font-medium leading-relaxed">
-                                Built strictly for universities. Enroll via Years and Semesters, and match with Modules effortlessly.
-                            </p>
-                        </div>
-                    </div>
-
-                    {/* Network Nodes Animation */}
-                    <div className="relative z-10 w-full max-w-[280px] h-[200px] flex items-center justify-center">
-                        <div className="relative w-40 h-32">
-                            {/* Top Node */}
-                            <motion.div
-                                animate={{ y: [0, -8, 0] }}
-                                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                                className="absolute top-0 left-1/2 -translate-x-1/2 w-12 h-12 bg-slate-800 border border-slate-600 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/20 z-10"
-                            >
-                                <div className="w-4 h-4 rounded-full bg-emerald-400 shadow-[0_0_15px_rgba(96,165,250,0.8)] animate-pulse" />
-                            </motion.div>
-
-                            {/* Connecting Lines */}
-                            <svg className="absolute top-6 left-0 w-full h-full text-slate-700" preserveAspectRatio="none">
-                                <path d="M 80 0 L 30 60 M 80 0 L 130 60" stroke="currentColor" strokeWidth="2" fill="none" className="opacity-50" strokeDasharray="4 4" />
-                            </svg>
-
-                            {/* Bottom Left Node */}
-                            <motion.div
-                                animate={{ y: [0, 8, 0] }}
-                                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-                                className="absolute bottom-4 left-[5%] w-10 h-10 bg-slate-800 border border-slate-600 rounded-xl flex items-center justify-center z-10"
-                            >
-                                <div className="w-3 h-3 rounded-full bg-teal-400 shadow-[0_0_10px_rgba(34,211,238,0.6)]" />
-                            </motion.div>
-
-                            {/* Bottom Right Node */}
-                            <motion.div
-                                animate={{ y: [0, 8, 0] }}
-                                transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}
-                                className="absolute bottom-4 right-[5%] w-10 h-10 bg-slate-800 border border-slate-600 rounded-xl flex items-center justify-center z-10"
-                            >
-                                <div className="w-3 h-3 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(192,132,252,0.6)]" />
-                            </motion.div>
-                        </div>
-                    </div>
+                    </Tilt>
                 </motion.div>
 
-            </div>
+                {/* Vertical Feature 3 */}
+                <motion.div variants={itemVariants} className="md:col-span-1 lg:col-span-1">
+                    <Tilt tiltMaxAngleX={4} tiltMaxAngleY={4} scale={1.02} transitionSpeed={2500} className="h-full block">
+                        <div className="h-full p-8 rounded-[2rem] bg-white border border-slate-100 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.05),inset_0_1px_1px_white] hover:-translate-y-1 hover:shadow-lg transition-all group cursor-pointer flex flex-col min-h-[340px]">
+                            <div className="p-3 bg-sky-50 text-sky-600 rounded-xl mb-auto shadow-sm border border-sky-100 self-start group-hover:-rotate-12 transition-transform">
+                                <Network strokeWidth={2.5} className="w-6 h-6" />
+                            </div>
+                            <div className="mt-8">
+                                <h3 className="text-xl font-black tracking-tight text-slate-800 mb-2">Dynamic Groups</h3>
+                                <p className="text-sm text-slate-500 font-medium leading-relaxed">
+                                    Secure peering, automated invites, and auto-generation of unique grading IDs for privacy.
+                                </p>
+                            </div>
+                        </div>
+                    </Tilt>
+                </motion.div>
+
+                {/* Dark Feature 4 - Spans 2 cols (Now Light Glass) */}
+                <motion.div variants={itemVariants} className="md:col-span-2 lg:col-span-3">
+                    <Tilt tiltMaxAngleX={2} tiltMaxAngleY={2} scale={1.01} transitionSpeed={2500} className="h-full block">
+                        <div className="relative h-full p-8 rounded-[2rem] bg-indigo-50 border border-indigo-100 shadow-[inset_0_1px_2px_rgba(255,255,255,1),0_10px_30px_-10px_rgba(129,140,248,0.2)] overflow-hidden group cursor-pointer flex flex-col md:flex-row justify-between items-center gap-6 min-h-[200px]">
+                            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_left,_rgba(255,255,255,0.8)_0%,_transparent_60%)] pointer-events-none" />
+                            
+                            <div className="relative z-10 flex-1 w-full text-left">
+                                <div className="inline-flex p-3 bg-white text-indigo-500 rounded-xl mb-4 border border-indigo-100 shadow-sm">
+                                    <Fingerprint strokeWidth={2.5} className="w-6 h-6" />
+                                </div>
+                                <h3 className="text-2xl font-black tracking-tight text-slate-800 mb-2">Academic Hierarchy Embedded</h3>
+                                <p className="text-indigo-900/60 font-medium leading-relaxed max-w-lg">
+                                    Designed strictly for university scales. Administrators can manage faculties, semesters, and thousands of modules from a bird's-eye matrix view.
+                                </p>
+                            </div>
+                            
+                            <div className="relative z-10 shrink-0 opacity-80 group-hover:opacity-100 transition-opacity">
+                                {/* Abstract Graphic representation */}
+                                <div className="w-32 h-32 rounded-full border-4 border-dashed border-indigo-200 flex items-center justify-center animate-spin-slow">
+                                    <div className="w-20 h-20 rounded-full bg-white border border-indigo-200 shadow-[0_4px_15px_-3px_rgba(129,140,248,0.3)] flex items-center justify-center">
+                                         <Zap className="w-6 h-6 text-indigo-400 animate-pulse" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </Tilt>
+                </motion.div>
+                
+                {/* Visual Filler Card */}
+                <motion.div variants={itemVariants} className="md:col-span-1 lg:col-span-1">
+                    <Tilt tiltMaxAngleX={5} tiltMaxAngleY={5} scale={1.02} transitionSpeed={2500} className="h-full block">
+                        <div className="h-full p-8 rounded-[2rem] bg-gradient-to-br from-indigo-400 to-teal-400 border border-transparent shadow-[0_10px_30px_-5px_rgba(99,102,241,0.4)] group cursor-pointer flex flex-col items-center justify-center text-center overflow-hidden relative hover:shadow-[0_15px_40px_-5px_rgba(99,102,241,0.5)] transition-shadow">
+                             <div className="absolute inset-0 bg-white/10 backdrop-blur-sm z-0 mix-blend-overlay" />
+                             <div className="relative z-10 p-4 bg-white text-indigo-500 rounded-2xl shadow-lg group-hover:scale-110 transition-transform">
+                                 <Target strokeWidth={2.5} className="w-8 h-8" />
+                             </div>
+                             <h3 className="relative z-10 text-white font-black text-xl mt-4">Precision Scoring</h3>
+                        </div>
+                    </Tilt>
+                </motion.div>
+
+            </motion.div>
         </section>
     );
 };

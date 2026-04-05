@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { PrismaClient } = require('@prisma/client');
+const { createNotification, notifyProjectMembers } = require('../services/notificationService');
 
 const prisma = new PrismaClient();
 
@@ -45,6 +46,18 @@ router.post('/create', async (req, res) => {
         });
 
         res.status(201).json({ success: true, task });
+
+        // Notify assignee about the new task
+        if (assigneeId) {
+            createNotification({
+                userId: assigneeId,
+                type: 'TASK_ASSIGNED',
+                title: 'New Task Assigned',
+                message: `You have been assigned a new task: "${title}".`,
+                link: `/student/projects/${projectId}/kanban`,
+                metadata: { projectId, taskId: task.id }
+            }).catch(() => {});
+        }
     } catch (error) {
         console.error("Task Create Error:", error);
         res.status(500).json({ success: false, message: 'Server error creating task' });
@@ -112,6 +125,18 @@ router.put('/:taskId/status', async (req, res) => {
         }
 
         res.status(200).json({ success: true, task });
+
+        // Notify project members about status change
+        if (String(existing.status) !== String(status)) {
+            notifyProjectMembers(existing.projectId, {
+                type: 'TASK_STATUS_CHANGED',
+                title: 'Task Status Updated',
+                message: `Task "${existing.title}" moved from ${existing.status} → ${status}.`,
+                link: `/student/projects/${existing.projectId}/kanban`,
+                metadata: { taskId },
+                excludeUserId: actorId
+            }).catch(() => {});
+        }
     } catch (error) {
         console.error("Task Status Update Error:", error);
         res.status(500).json({ success: false, message: 'Server error updating task status' });

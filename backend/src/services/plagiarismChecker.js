@@ -1,5 +1,47 @@
 const natural = require('natural');
-const TfIdf = natural.TfIdf;
+const NGrams = natural.NGrams;
+
+// Use natural's English stopwords
+const stopwords = new Set(natural.stopwords);
+
+/**
+ * Normalizes text, removes punctuation, stop words, and generates trigrams.
+ */
+function extractTrigrams(text) {
+    if (!text) return new Set();
+    const tokenizer = new natural.WordTokenizer();
+    let tokens = tokenizer.tokenize(text.toLowerCase());
+    
+    // Filter stopwords and very short tokens
+    tokens = tokens.filter(word => !stopwords.has(word) && word.length > 1);
+    
+    // NGrams.trigrams returns an array of arrays like [['word1', 'word2', 'word3'], ...]
+    const trigramsArray = NGrams.trigrams(tokens);
+    const trigramStrings = trigramsArray.map(gram => gram.join(' '));
+    
+    return new Set(trigramStrings);
+}
+
+/**
+ * Computes Jaccard Similarity between two sets of trigrams.
+ * Formula: Intersect(A, B) / Union(A, B)
+ */
+function computeJaccardSimilarity(set1, set2) {
+    if (set1.size === 0 || set2.size === 0) return 0;
+    
+    let shorterSet = set1.size < set2.size ? set1 : set2;
+    let longerSet = set1.size < set2.size ? set2 : set1;
+    
+    let intersectionSize = 0;
+    for (const item of shorterSet) {
+        if (longerSet.has(item)) intersectionSize++;
+    }
+    
+    const unionSize = set1.size + set2.size - intersectionSize;
+    if (unionSize === 0) return 0;
+    
+    return intersectionSize / unionSize;
+}
 
 /**
  * Checks for plagiarism between a new submission and existing ones.
@@ -12,32 +54,37 @@ function checkPlagiarism(newText, existingSubmissions) {
         return { plagiarismScore: 0, matches: [] };
     }
 
-    const tfidf = new TfIdf();
-    
-    // Add the new submission as document 0
-    tfidf.addDocument(newText);
+    // Process newText ONCE before looping over all existing submissions (O(1) instead of O(N))
+    const newTrigrams = extractTrigrams(newText);
     
     const matches = [];
     let maxScore = 0;
 
     // Compare with each existing submission
-    existingSubmissions.forEach((sub, index) => {
+    existingSubmissions.forEach((sub) => {
         if (!sub.extractedText) return;
 
-        // Simplified cosine similarity using natural's TfIdf
-        // natural doesn't have a direct cosine similarity function in TfIdf, 
-        // so we manually compute a basic similarity score based on common terms
+        const subTrigrams = extractTrigrams(sub.extractedText);
         
-        const score = computeSimilarity(newText, sub.extractedText);
-        const percentage = Math.min(Math.round(score * 100), 100);
+        let score = computeJaccardSimilarity(newTrigrams, subTrigrams);
+
+        // Trigram match requires exact 3-word overlap (excluding stopwords).
+        // Since we are taking intersection over union, even heavily plagiarized 
+        // texts might top out around 60-80% due to formatting.
+        // We calculate a percentage score.
+        const rawPercentage = score * 100;
+        
+        // Boost factor: Jaccard similarity of trigrams usually yields lower raw numbers 
+        // than single word overlap. 30% Jaccard on trigrams is MASSIVE plagiarism.
+        // We'll apply a mild 1.5x scaling factor to make it visually clearer for users.
+        const percentage = Math.min(Math.round(rawPercentage * 1.5), 100);
 
         if (percentage > maxScore) {
             maxScore = percentage;
         }
 
-        // Only track matches above 30% for internal logging, 
-        // but we'll flag 70%+ in the main flow
-        if (percentage >= 30) {
+        // Track anything over 20% for database relations
+        if (percentage >= 20) {
             matches.push({
                 submissionId: sub.id,
                 score: percentage
@@ -47,25 +94,8 @@ function checkPlagiarism(newText, existingSubmissions) {
 
     return {
         plagiarismScore: maxScore,
-        matches: matches.filter(m => m.score >= 70) // Main flagged matches
+        matches: matches.filter(m => m.score >= 50) // Flag matches over 50% for main UI
     };
 }
 
-/**
- * Basic similarity computation using token overlap.
- * For a production environment, a more robust library like 'string-similarity' 
- * or a vector-based approach (Word2Vec/BERT) would be better.
- */
-function computeSimilarity(text1, text2) {
-    const tokenizer = new natural.WordTokenizer();
-    const tokens1 = new Set(tokenizer.tokenize(text1.toLowerCase()));
-    const tokens2 = new Set(tokenizer.tokenize(text2.toLowerCase()));
-
-    const intersection = new Set([...tokens1].filter(x => tokens2.has(x)));
-    const union = new Set([...tokens1, ...tokens2]);
-
-    if (union.size === 0 || tokens1.size === 0 || tokens2.size === 0) return 0;
-    return intersection.size / Math.sqrt(tokens1.size * tokens2.size); // Cosine-like similarity
-}
-
-module.exports = { checkPlagiarism };
+module.exports = { checkPlagiarism, extractTrigrams, computeJaccardSimilarity };

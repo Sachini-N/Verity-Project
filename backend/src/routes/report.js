@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { PrismaClient } = require('@prisma/client');
+const { createNotification, notifyProjectMembers } = require('../services/notificationService');
 
 const prisma = new PrismaClient();
 
@@ -29,6 +30,16 @@ router.post('/create', async (req, res) => {
         });
 
         res.status(201).json({ success: true, report });
+
+        // Notify project members about the submitted report
+        notifyProjectMembers(projectId, {
+            type: 'REPORT_SUBMITTED',
+            title: 'Weekly Report Submitted',
+            message: `Weekly Report #${parseInt(weekNumber) || 1} has been submitted.`,
+            link: `/student/projects/${projectId}/reports/weekly`,
+            metadata: { reportId: report.id },
+            excludeUserId: userId
+        }).catch(() => {});
     } catch (error) {
         console.error("Weekly Report Create Error:", error);
         res.status(500).json({ success: false, message: 'Server error creating report' });
@@ -106,6 +117,19 @@ router.put('/review/:id', async (req, res) => {
         });
 
         res.status(200).json({ success: true, report });
+
+        // Notify the student who submitted it that it was reviewed
+        const original = await prisma.weeklyReport.findUnique({ where: { id } });
+        if (original?.submittedBy) {
+            createNotification({
+                userId: original.submittedBy,
+                type: 'REPORT_REVIEWED',
+                title: 'Report Reviewed',
+                message: `Your Weekly Report has been reviewed. Grade: ${grade || 'N/A'}.`,
+                link: `/student/projects/${original.projectId}/reports/weekly`,
+                metadata: { reportId: id }
+            }).catch(() => {});
+        }
     } catch (error) {
         console.error("Weekly Report Review Error:", error);
         res.status(500).json({ success: false, message: 'Server error reviewing report' });

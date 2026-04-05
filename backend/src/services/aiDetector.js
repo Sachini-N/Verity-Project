@@ -60,7 +60,7 @@ async function detectAIContent(text) {
                     key: saplingKey,
                     text: body.substring(0, 200000)
                 },
-                { timeout: 120000 }
+                { timeout: 60000 }
             );
             const aiScore = (response.data.score || 0) * 100;
             return {
@@ -82,7 +82,7 @@ async function detectAIContent(text) {
                 { inputs: snippet },
                 {
                     headers: { Authorization: `Bearer ${hfToken}` },
-                    timeout: 120000
+                    timeout: 60000
                 }
             );
             const aiScore = parseHFClassifierOutput(response.data);

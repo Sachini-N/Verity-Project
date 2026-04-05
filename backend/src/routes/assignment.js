@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { PrismaClient } = require('@prisma/client');
+const { createNotification, notifyByRole } = require('../services/notificationService');
 
 const prisma = new PrismaClient();
 
@@ -138,6 +139,15 @@ router.post('/create', async (req, res) => {
         });
 
         res.status(201).json({ success: true, assignment });
+
+        // Notify all students about the new assignment
+        notifyByRole('STUDENT', {
+            type: 'ASSIGNMENT_CREATED',
+            title: 'New Assignment Posted',
+            message: `New assignment "${title}" for ${moduleCode}. Deadline: ${new Date(deadline).toLocaleDateString()}.`,
+            link: '/student/assignments',
+            metadata: { assignmentId: assignment.id }
+        }).catch(() => {});
     } catch (error) {
         console.error("Assignment Create Error:", error);
         res.status(500).json({ success: false, message: 'Server error creating assignment', error: error.message });

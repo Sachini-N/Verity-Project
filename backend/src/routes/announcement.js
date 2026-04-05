@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { PrismaClient } = require('@prisma/client');
+const { notifyProjectMembers } = require('../services/notificationService');
 
 const prisma = new PrismaClient();
 
@@ -30,6 +31,15 @@ router.post('/create', async (req, res) => {
         });
 
         res.status(201).json({ success: true, announcement });
+
+        // Notify all project members about the new announcement
+        notifyProjectMembers(projectId, {
+            type: 'ANNOUNCEMENT',
+            title: 'New Announcement',
+            message: `New announcement: "${title}".`,
+            link: `/student/projects/${projectId}/announcements`,
+            metadata: { announcementId: announcement.id }
+        }).catch(() => {});
     } catch (error) {
         console.error("Announcement Create Error:", error);
         res.status(500).json({ success: false, message: 'Server error creating announcement' });

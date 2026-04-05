@@ -2,6 +2,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { Users, ShieldAlert, Download, UploadCloud } from 'lucide-react';
 import { useModule } from '../../context/ModuleContext';
 import { useState, useEffect } from 'react';
+import NotificationCenter from '../NotificationCenter';
 
 const lecturerNav = [
   { label: 'My Groups', path: '/lecturer/projects', icon: Users },
@@ -117,8 +118,9 @@ export default function LecturerNav() {
           })}
         </nav>
 
-        {/* User Profile */}
-        <div className="flex items-center gap-4 shrink-0 pl-4 border-l border-slate-200">
+        {/* Notification Bell + User Profile */}
+        <div className="flex items-center gap-3 shrink-0 pl-4 border-l border-slate-200">
+          <NotificationCenter />
           <Link to="/lecturer/profile" className="hidden sm:flex items-center gap-3 p-1.5 px-3 rounded-xl hover:bg-indigo-50 transition-colors cursor-pointer group border border-transparent hover:border-indigo-100">
             <div className="text-right">
               <p className="text-sm font-black text-slate-800 leading-none group-hover:text-indigo-700 transition-colors">{user?.name || 'Lecturer'}</p>

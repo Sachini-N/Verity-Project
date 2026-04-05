@@ -1,5 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { ClipboardCheck, Users, Settings, BookOpen } from 'lucide-react';
+import NotificationCenter from '../NotificationCenter';
 
 const managerNav = [
   { label: 'Approvals', path: '/manager/approvals', icon: ClipboardCheck },
@@ -72,8 +73,9 @@ export default function ManagerNav() {
           })}
         </nav>
 
-        {/* User Profile */}
-        <div className="flex items-center gap-4 shrink-0 pl-4 border-l border-slate-200">
+        {/* Notification Bell + User Profile */}
+        <div className="flex items-center gap-3 shrink-0 pl-4 border-l border-slate-200">
+          <NotificationCenter />
           <div className="hidden sm:flex items-center gap-3">
             <div className="text-right">
               <p className="text-sm font-black text-slate-800 leading-none">{user?.name || 'Admin'}</p>

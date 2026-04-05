@@ -4,6 +4,7 @@ const { PrismaClient } = require('@prisma/client');
 const { fetchContributorStatsWithRetry } = require('../services/githubContributors');
 const { getEngagementAnalytics } = require('../services/engagementAnalytics');
 const { getIntelligenceOverview } = require('../services/intelligenceOverview');
+const { notifyProjectMembers, notifyByRole } = require('../services/notificationService');
 
 const prisma = new PrismaClient();
 
@@ -271,6 +272,24 @@ router.post('/create', async (req, res) => {
             }
         });
 
+        // Notify managers about new group registration
+        notifyByRole('MANAGER', {
+            type: 'PROJECT_CREATED',
+            title: 'New Group Registration',
+            message: `A new group "${title}" has been submitted for approval.`,
+            link: '/manager/approvals',
+            metadata: { projectId: newProject.id }
+        }).catch(() => {});
+
+        // Notify all members they've been added
+        notifyProjectMembers(newProject.id, {
+            type: 'MEMBER_ADDED',
+            title: 'Added to Project',
+            message: `You have been added to the project "${title}".`,
+            link: `/student/projects/${newProject.id}`,
+            metadata: {}
+        }).catch(() => {});
+
         res.status(201).json({ success: true, project: newProject });
     } catch (error) {
         console.error("Project Create Error:", error);
@@ -285,7 +304,8 @@ router.get('/list', async (req, res) => {
             include: {
                 members: {
                     include: { user: true }
-                }
+                },
+                sprints: true
             },
             orderBy: { createdAt: 'desc' }
         });
@@ -748,6 +768,18 @@ router.put('/manager/approvals/:id', async (req, res) => {
             where: { id },
             data: { status: dbStatus }
         });
+
+        // Notify all project members about approval/rejection
+        const notifType = dbStatus === 'Active' ? 'PROJECT_APPROVED' : 'PROJECT_REJECTED';
+        notifyProjectMembers(id, {
+            type: notifType,
+            title: dbStatus === 'Active' ? 'Group Approved! 🎉' : 'Group Rejected',
+            message: dbStatus === 'Active'
+                ? `Your group "${updatedProject.title}" has been approved. You can now access your workspace!`
+                : `Your group "${updatedProject.title}" has been rejected by the manager.`,
+            link: dbStatus === 'Active' ? `/student/projects/${id}` : '/student/projects',
+            metadata: {}
+        }).catch(() => {});
 
         res.status(200).json({ success: true, project: updatedProject });
     } catch (error) {
