@@ -3,7 +3,7 @@ import { Search, UserX, UserCheck, ShieldAlert, Mail } from 'lucide-react';
 
 export default function ManagerUserDirectory() {
   const [users, setUsers] = useState<any[]>([]);
-  const [filterRole, setFilterRole] = useState('All');
+  const [filterRole, setFilterRole] = useState<'Student' | 'Lecturer' | 'Manager'>('Student');
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
@@ -23,13 +23,25 @@ export default function ManagerUserDirectory() {
   };
 
   const filteredUsers = users.filter(user => {
-    const matchesRole = filterRole === 'All' || user.role === filterRole;
+    const role = String(user.role || '').toLowerCase();
+    const matchesRole = role === filterRole.toLowerCase();
     const matchesSearch = 
       user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       user.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
       user.email.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesRole && matchesSearch;
   });
+
+  const roleCounts = users.reduce(
+    (acc, user) => {
+      const role = String(user.role || '').toLowerCase();
+      if (role === 'student') acc.Student += 1;
+      if (role === 'lecturer') acc.Lecturer += 1;
+      if (role === 'manager') acc.Manager += 1;
+      return acc;
+    },
+    { Student: 0, Lecturer: 0, Manager: 0 }
+  );
 
   const toggleStatus = async (dbId: string) => {
     try {
@@ -52,21 +64,12 @@ export default function ManagerUserDirectory() {
 
   return (
     <div className="animate-fade-up max-w-7xl mx-auto space-y-8 px-6">
-      <div className="page-header border-b-rose-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="page-header role-page-header flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="page-title text-rose-900 border-rose-200">User Directory</h1>
-          <p className="page-subtitle text-slate-500">Manage all registered students and lecturers. Suspend or modify accounts.</p>
+          <h1 className="page-title role-title">User Directory</h1>
+          <p className="page-subtitle text-slate-500">Manage users by role category. Click a role card to view only relevant accounts.</p>
         </div>
         <div className="flex items-center gap-3">
-          <select 
-            value={filterRole} 
-            onChange={e => setFilterRole(e.target.value)}
-            className="bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-semibold focus:ring-2 focus:ring-rose-500/20 outline-none"
-          >
-            <option value="All">All Roles</option>
-            <option value="Student">Students Only</option>
-            <option value="Lecturer">Lecturers Only</option>
-          </select>
           <div className="relative">
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
             <input 
@@ -74,11 +77,34 @@ export default function ManagerUserDirectory() {
               placeholder="Search by ID or Name..." 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="bg-white border border-slate-200 rounded-xl pl-9 pr-4 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-rose-500/20"
+              className="role-focus-input bg-white border border-slate-200 rounded-xl pl-9 pr-4 py-2.5 text-sm font-semibold"
             />
           </div>
         </div>
       </div>
+
+      <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {[
+          { key: 'Student' as const, label: 'Students', count: roleCounts.Student, accent: 'from-indigo-600 to-blue-600', note: 'Learner accounts' },
+          { key: 'Lecturer' as const, label: 'Lecturers', count: roleCounts.Lecturer, accent: 'from-amber-500 to-orange-500', note: 'Teaching accounts' },
+          { key: 'Manager' as const, label: 'Managers', count: roleCounts.Manager, accent: 'from-emerald-500 to-teal-500', note: 'Admin accounts' },
+        ].map((card) => {
+          const active = filterRole === card.key;
+          return (
+            <button
+              key={card.key}
+              onClick={() => setFilterRole(card.key)}
+              className={`text-left rounded-2xl border p-4 transition-all ${active ? 'border-indigo-300 bg-white shadow-md ring-2 ring-indigo-100' : 'border-slate-200 bg-white/90 hover:border-slate-300 hover:shadow-sm'}`}
+            >
+              <div className={`inline-flex px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider text-white bg-gradient-to-r ${card.accent}`}>
+                {card.label}
+              </div>
+              <p className="mt-3 text-3xl font-black text-slate-900 leading-none">{card.count}</p>
+              <p className="mt-1 text-xs font-semibold text-slate-500">{card.note}</p>
+            </button>
+          );
+        })}
+      </section>
 
       <div className="card overflow-hidden">
         <div className="overflow-x-auto">
@@ -94,7 +120,7 @@ export default function ManagerUserDirectory() {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filteredUsers.map(user => (
-                <tr key={user.id} className="hover:bg-slate-50/50 transition-colors">
+                <tr key={user.dbId || user.id} className="hover:bg-slate-50/50 transition-colors">
                   <td className="px-6 py-4">
                     <div className="font-bold text-slate-900">{user.name}</div>
                     <div className="text-sm font-semibold text-slate-500 mt-0.5">{user.id}</div>
@@ -105,7 +131,7 @@ export default function ManagerUserDirectory() {
                     </div>
                   </td>
                   <td className="px-6 py-4 text-center">
-                    <span className={`badge ${user.role === 'Lecturer' ? 'badge-amber' : 'badge-sage'}`}>
+                    <span className={`badge ${user.role === 'Lecturer' ? 'badge-amber' : user.role === 'Manager' ? 'badge-blue' : 'badge-sage'}`}>
                       {user.role} {user.role === 'Student' && `(${user.enrolled})`}
                     </span>
                   </td>
@@ -133,7 +159,7 @@ export default function ManagerUserDirectory() {
               ))}
               {filteredUsers.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-6 py-8 text-center text-slate-500 font-medium">No users found matching your filters.</td>
+                  <td colSpan={5} className="px-6 py-8 text-center text-slate-500 font-medium">No {filterRole.toLowerCase()} users found matching your search.</td>
                 </tr>
               )}
             </tbody>

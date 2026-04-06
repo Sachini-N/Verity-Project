@@ -3,8 +3,30 @@ const router = express.Router();
 const { PrismaClient } = require('@prisma/client');
 const axios = require('axios');
 const { notifyProjectMembers } = require('../services/notificationService');
+const { recordIntegrationCall } = require('../services/systemMetrics');
 
 const prisma = new PrismaClient();
+
+async function githubGet(url, config = {}) {
+    const startedAt = Date.now();
+    try {
+        const response = await axios.get(url, config);
+        recordIntegrationCall('github', {
+            success: response.status < 400,
+            statusCode: response.status,
+            durationMs: Date.now() - startedAt
+        });
+        return response;
+    } catch (error) {
+        recordIntegrationCall('github', {
+            success: false,
+            statusCode: Number(error?.response?.status) || 500,
+            durationMs: Date.now() - startedAt,
+            error: error?.response?.data?.message || error?.message || 'GitHub request failed'
+        });
+        throw error;
+    }
+}
 
 const getHeaders = () => {
     const headers = {
@@ -66,7 +88,7 @@ const loginFromNoreplyEmail = (email) => {
 /** GitHub may return 202 while contributor stats are computed — retry a few times */
 async function fetchContributorStats(owner, repoName, headers) {
     for (let i = 0; i < 6; i++) {
-        const statsRes = await axios.get(
+        const statsRes = await githubGet(
             `https://api.github.com/repos/${owner}/${repoName}/stats/contributors`,
             { headers, validateStatus: () => true }
         );
@@ -151,7 +173,7 @@ router.post('/link', async (req, res) => {
         }
 
         try {
-            await axios.get(`https://api.github.com/repos/${owner}/${repoName}`, { headers: getHeaders() });
+            await githubGet(`https://api.github.com/repos/${owner}/${repoName}`, { headers: getHeaders() });
         } catch (e) {
             console.error('GitHub API Verification Error:', e.message, e.response?.data);
             return res.status(404).json({ success: false, message: `Repository not found or API Limit Reached: ${e.message}` });
@@ -231,7 +253,7 @@ router.post('/sync/:projectId', async (req, res) => {
         // 1. Fetch Branches
         let branches = [];
         try {
-            const branchRes = await axios.get(`https://api.github.com/repos/${owner}/${repoName}/branches`, {
+            const branchRes = await githubGet(`https://api.github.com/repos/${owner}/${repoName}/branches`, {
                 headers,
                 params: { per_page: 100 }
             });
@@ -247,7 +269,7 @@ router.post('/sync/:projectId', async (req, res) => {
         
         for (const branch of targetBranches) {
             try {
-                const commitsRes = await axios.get(`https://api.github.com/repos/${owner}/${repoName}/commits`, {
+                const commitsRes = await githubGet(`https://api.github.com/repos/${owner}/${repoName}/commits`, {
                     headers,
                     params: { sha: branch, per_page: 50 }
                 });

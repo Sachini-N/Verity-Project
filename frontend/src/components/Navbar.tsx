@@ -1,56 +1,117 @@
 import { Link } from 'react-router-dom';
-import { motion, useScroll, useTransform } from 'framer-motion';
+import { motion } from 'framer-motion';
+import { BookOpenText, LogIn, UserPlus, ArrowRightToLine } from 'lucide-react';
+import { useState, useEffect } from 'react';
 
 const Navbar = () => {
-    const { scrollY } = useScroll();
-    const navBackground = useTransform(scrollY, [0, 50], ['rgba(248, 250, 252, 0)', 'rgba(255, 255, 255, 0.7)']);
-    const navBorder = useTransform(scrollY, [0, 50], ['rgba(226, 232, 240, 0)', 'rgba(255, 255, 255, 0.5)']);
-    const navShadow = useTransform(scrollY, [0, 50], ['none', '0 10px 40px -10px rgba(0,0,0,0.05)']);
-    const navBackdrop = useTransform(scrollY, [0, 50], ['blur(0px)', 'blur(20px)']);
+    const [activeSection, setActiveSection] = useState('home');
+
+    const navLinks = [
+        { id: 'features', label: 'Features', href: '#features' },
+        { id: 'about', label: 'How It Works', href: '#about' },
+        { id: 'pricing', label: 'Pricing', href: '#pricing' }
+    ];
+
+    const handleNavClick = (id: string) => {
+        setActiveSection(id);
+    };
+
+    // Intersection Observer for auto-detecting active section on scroll
+    useEffect(() => {
+        const observerOptions = {
+            root: null,
+            rootMargin: '-50% 0px -50% 0px',
+            threshold: 0
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                    const sectionId = entry.target.id;
+                    if (sectionId && navLinks.some(link => link.id === sectionId)) {
+                        setActiveSection(sectionId);
+                    }
+                }
+            });
+        }, observerOptions);
+
+        // Observe all nav sections
+        navLinks.forEach((link) => {
+            const element = document.getElementById(link.id);
+            if (element) {
+                observer.observe(element);
+            }
+        });
+
+        return () => {
+            navLinks.forEach((link) => {
+                const element = document.getElementById(link.id);
+                if (element) {
+                    observer.unobserve(element);
+                }
+            });
+        };
+    }, []);
 
     return (
-        <motion.nav
-            style={{
-                backgroundColor: navBackground,
-                borderColor: navBorder,
-                boxShadow: navShadow,
-                backdropFilter: navBackdrop
-            }}
-            className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-4 transition-all duration-300 border-b lg:px-12"
-        >
-            <div className="flex items-center space-x-2">
-                {/* Sleek Gradient Logo */}
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-600 to-teal-500 shadow-md shadow-emerald-500/20 flex items-center justify-center">
-                    <div className="w-3 h-3 bg-white rounded-sm rotate-45"></div>
-                </div>
-                <span className="text-xl font-bold tracking-tight text-slate-900">
-                    Verity
-                </span>
-            </div>
-
-            <div className="hidden space-x-8 md:flex items-center px-6 py-2 bg-white/40 backdrop-blur-md rounded-full border border-white/60 shadow-sm">
-                {['Product', 'Intelligence', 'Integration'].map((item) => (
-                    <Link
-                        key={item}
-                        to={`#${item.toLowerCase()}`}
-                        className="text-sm font-semibold text-slate-600 hover:text-emerald-600 transition-colors"
+        <div className="fixed top-6 left-0 right-0 z-50 flex justify-center px-4 pointer-events-none">
+            <motion.nav className="pointer-events-auto mx-auto flex w-full max-w-5xl items-center gap-1 sm:gap-2 rounded-full border border-white/80 bg-white/50 px-3 py-2 shadow-[0_8px_32px_rgba(0,0,0,0.04),inset_0_1px_1px_rgba(255,255,255,0.9)] backdrop-blur-2xl transition-all">
+                <Link to="/" className="group flex items-center gap-2 shrink-0 border-r border-slate-200/60 pl-2 pr-3">
+                    <motion.div
+                        className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-tr from-indigo-500 to-indigo-400 text-white shadow-sm"
+                        whileHover={{ scale: 1.05, rotate: 8 }}
+                        transition={{ duration: 0.25 }}
                     >
-                        {item}
-                    </Link>
-                ))}
-            </div>
+                        <BookOpenText className="h-3.5 w-3.5" />
+                    </motion.div>
+                    <span className="hidden text-sm font-extrabold tracking-tight text-slate-800 transition-colors group-hover:text-indigo-600 sm:block">
+                        Verity
+                    </span>
+                </Link>
 
-            {/* Auth Buttons */}
-            <div className="hidden lg:flex items-center space-x-4">
-                <Link to="/login" className="text-sm font-bold text-slate-600 hover:text-emerald-600 transition-colors">
-                    Sign In
-                </Link>
-                <Link to="/register" className="group relative inline-flex items-center justify-center px-5 py-2.5 text-sm font-bold text-white transition-all duration-200 bg-slate-900 border border-transparent rounded-xl hover:bg-slate-800 hover:shadow-lg hover:-translate-y-0.5 overflow-hidden">
-                    <span className="relative z-10">Get Started</span>
-                    <div className="absolute inset-0 h-full w-full bg-gradient-to-r from-emerald-600 to-teal-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                </Link>
-            </div>
-        </motion.nav>
+                <div className="relative flex min-w-0 flex-1 items-center justify-center gap-1 overflow-x-auto no-scrollbar max-w-[50vw] sm:max-w-none">
+                    {navLinks.map((link) => (
+                        <motion.a
+                            key={link.id}
+                            href={link.href}
+                            className={`relative whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
+                                activeSection === link.id ? 'text-indigo-600' : 'text-slate-500 hover:bg-white/40 hover:text-slate-800'
+                            }`}
+                            onClick={() => handleNavClick(link.id)}
+                            onMouseEnter={() => handleNavClick(link.id)}
+                        >
+                            {activeSection === link.id && (
+                                <motion.div
+                                    layoutId="active-island-link"
+                                    className="absolute inset-0 rounded-full border border-slate-100 bg-white shadow-[0_2px_10px_-3px_rgba(129,140,248,0.2)]"
+                                    transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                                />
+                            )}
+                            <span className="relative z-10">{link.label}</span>
+                        </motion.a>
+                    ))}
+                </div>
+
+                <div className="ml-auto flex items-center gap-1 shrink-0 border-l border-slate-200/60 pl-3">
+                    <motion.div whileHover={{ y: -1 }}>
+                        <Link to="/login" className="hidden lg:flex h-8 w-8 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 hover:text-indigo-600 transition-colors">
+                            <LogIn className="h-4 w-4" />
+                        </Link>
+                    </motion.div>
+
+                    <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+                        <Link
+                            to="/register"
+                            className="inline-flex items-center gap-1 rounded-full bg-indigo-600 px-3 py-1.5 text-[0.8rem] font-bold text-white shadow-[0_8px_24px_-12px_rgba(79,70,229,0.8)] transition-all hover:bg-indigo-700"
+                        >
+                            <UserPlus className="h-3 w-3" />
+                            <span className="hidden sm:inline">Get Started</span>
+                            <ArrowRightToLine className="h-3 w-3 sm:hidden" />
+                        </Link>
+                    </motion.div>
+                </div>
+            </motion.nav>
+        </div>
     );
 };
 

@@ -4,10 +4,28 @@ const { PrismaClient } = require('@prisma/client');
 
 const prisma = new PrismaClient();
 
+const MANAGER_NOTIFICATION_TYPES = new Set([
+    'PROJECT_CREATED',
+    'PROJECT_APPROVED',
+    'PROJECT_REJECTED',
+    'HIGH_RISK',
+    'FAIRNESS_ALERT',
+    'SUBMISSION_FLAGGED'
+]);
+
+function normalizeType(value) {
+    return String(value || '').trim().toUpperCase();
+}
+
+function applyScopeFilter(notifications, scope) {
+    if (normalizeType(scope) !== 'MANAGER') return notifications;
+    return notifications.filter((notif) => MANAGER_NOTIFICATION_TYPES.has(normalizeType(notif.type)));
+}
+
 // GET /api/notification/list?userId=xxx
 router.get('/list', async (req, res) => {
     try {
-        const { userId } = req.query;
+        const { userId, scope } = req.query;
         if (!userId) {
             return res.status(400).json({ success: false, message: 'userId query parameter is required.' });
         }
@@ -18,7 +36,9 @@ router.get('/list', async (req, res) => {
             take: 50
         });
 
-        res.status(200).json({ success: true, notifications });
+        const filtered = applyScopeFilter(notifications, scope);
+
+        res.status(200).json({ success: true, notifications: filtered });
     } catch (error) {
         console.error('Notification List Error:', error);
         res.status(500).json({ success: false, message: 'Server error fetching notifications.' });
@@ -28,14 +48,16 @@ router.get('/list', async (req, res) => {
 // GET /api/notification/unread-count?userId=xxx
 router.get('/unread-count', async (req, res) => {
     try {
-        const { userId } = req.query;
+        const { userId, scope } = req.query;
         if (!userId) {
             return res.status(400).json({ success: false, message: 'userId is required.' });
         }
 
-        const count = await prisma.notification.count({
+        const notifications = await prisma.notification.findMany({
             where: { userId, isRead: false }
         });
+
+        const count = applyScopeFilter(notifications, scope).length;
 
         res.status(200).json({ success: true, count });
     } catch (error) {
@@ -62,15 +84,26 @@ router.put('/:id/read', async (req, res) => {
 // PUT /api/notification/read-all
 router.put('/read-all', async (req, res) => {
     try {
-        const { userId } = req.body;
+        const { userId, scope } = req.body;
         if (!userId) {
             return res.status(400).json({ success: false, message: 'userId is required.' });
         }
 
-        await prisma.notification.updateMany({
-            where: { userId, isRead: false },
-            data: { isRead: true }
-        });
+        if (normalizeType(scope) === 'MANAGER') {
+            await prisma.notification.updateMany({
+                where: {
+                    userId,
+                    isRead: false,
+                    type: { in: Array.from(MANAGER_NOTIFICATION_TYPES) }
+                },
+                data: { isRead: true }
+            });
+        } else {
+            await prisma.notification.updateMany({
+                where: { userId, isRead: false },
+                data: { isRead: true }
+            });
+        }
 
         res.status(200).json({ success: true, message: 'All notifications marked as read.' });
     } catch (error) {

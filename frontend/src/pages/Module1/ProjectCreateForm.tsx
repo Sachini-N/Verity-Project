@@ -35,6 +35,7 @@ export default function ProjectCreateForm() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isFocused, setIsFocused] = useState(false);
   const [allUsers, setAllUsers] = useState<any[]>([]);
+  const [settings, setSettings] = useState<any>(null);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -51,6 +52,29 @@ export default function ProjectCreateForm() {
     fetchUsers();
   }, []);
 
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const res = await fetch('http://localhost:5000/api/system/settings');
+        const data = await res.json();
+        if (data.success && data.settings) {
+          setSettings(data.settings);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    fetchSettings();
+  }, []);
+
+  const moduleLimit = (() => {
+    const code = String(selectedModule || '').toUpperCase();
+    const moduleSpecific = Number(settings?.moduleGroupSizes?.[code]);
+    const globalLimit = Number(settings?.maxGroupSize) || 6;
+    return Number.isFinite(moduleSpecific) && moduleSpecific >= 2 ? moduleSpecific : globalLimit;
+  })();
+
   // Filter students based on search query, excluding already selected
   const suggestedMembers = allUsers.filter(u => 
     (u.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -60,13 +84,20 @@ export default function ProjectCreateForm() {
 
   // If the user reduces the expected size, we need to slice the array so it doesn't exceed the new limit
   useEffect(() => {
-    if (selectedMembers.length > expectedSize - 1) {
-      setValue('members', selectedMembers.slice(0, expectedSize - 1), { shouldValidate: true });
+    const maxTeamSize = Math.min(expectedSize, moduleLimit);
+    if (selectedMembers.length > maxTeamSize - 1) {
+      setValue('members', selectedMembers.slice(0, maxTeamSize - 1), { shouldValidate: true });
     }
-  }, [expectedSize, selectedMembers, setValue]);
+  }, [expectedSize, moduleLimit, selectedMembers, setValue]);
+
+  useEffect(() => {
+    if (expectedSize > moduleLimit) {
+      setValue('expectedSize', moduleLimit, { shouldValidate: true });
+    }
+  }, [expectedSize, moduleLimit, setValue]);
 
   const handleAddMember = (id: string) => {
-    if (selectedMembers.length >= expectedSize - 1) { // -1 because the leader is implicitly the 1st
+    if (selectedMembers.length >= Math.min(expectedSize, moduleLimit) - 1) { // -1 because the leader is implicitly the 1st
       return; 
     }
     setValue('members', [...selectedMembers, id], { shouldValidate: true });
@@ -139,6 +170,9 @@ export default function ProjectCreateForm() {
               <option value="IT3030">IT3030 - IT Project Management</option>
               <option value="CD4000">CD4000 - AI Research Frameworks</option>
             </select>
+            <p className="mt-1.5 text-[11px] font-semibold text-slate-500">
+              Module team size limit: <span className="font-black text-emerald-700">{moduleLimit} members</span>.
+            </p>
             {errors.module && <p className="text-red-500 text-xs mt-1.5 font-bold">{errors.module.message as string}</p>}
           </div>
 
@@ -177,10 +211,13 @@ export default function ProjectCreateForm() {
                 {...register('expectedSize')}
                 className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all font-bold text-slate-700 appearance-none cursor-pointer"
               >
-                {[2,3,4,5,6].map(num => (
+                {Array.from({ length: Math.max(0, moduleLimit - 1) }, (_, idx) => idx + 2).map(num => (
                   <option key={num} value={num}>{num} Members</option>
                 ))}
               </select>
+              {expectedSize > moduleLimit && (
+                <p className="text-amber-600 text-xs mt-1.5 font-bold">This module only allows up to {moduleLimit} members. The selection will be capped automatically.</p>
+              )}
             </div>
             
             {/* Auto-suggest Member Selection */}
@@ -251,6 +288,8 @@ export default function ProjectCreateForm() {
              </div>
              <p className="text-[11px] font-bold text-amber-600 mt-4 leading-relaxed">
                * Critical Rule: A student can only be registered to ONE active group per module. If any IT number selected is already enrolled in a group for <span className="text-amber-800">{selectedModule || 'the selected module'}</span>, this request will be instantly rejected by the system.
+               <br />
+               * Module team size limit: {moduleLimit} total members maximum for the selected module.
              </p>
           </div>
 
@@ -270,7 +309,7 @@ export default function ProjectCreateForm() {
           <div className="pt-4 border-t border-slate-100 flex justify-end">
             <button 
               type="submit" 
-              disabled={loading || selectedMembers.length !== expectedSize - 1}
+              disabled={loading || selectedMembers.length !== Math.min(expectedSize, moduleLimit) - 1}
               className="bg-emerald-600 text-white font-black px-8 py-4 rounded-xl hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-600/20 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed group"
             >
               {loading ? (

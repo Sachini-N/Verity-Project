@@ -6,9 +6,9 @@ import Footer from '../Footer';
 export default function LecturerLayout() {
   return (
     <ModuleProvider>
-      <div className="min-h-screen bg-amber-50/30 flex flex-col">
+      <div className="theme-lecturer min-h-screen bg-gradient-to-b from-[#f6fbf8] via-[#f9fcfb] to-[#f2faf7] flex flex-col">
         <LecturerNav />
-        <main className="flex-1 w-full max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <main className="flex-1 w-full max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-10 pt-28 pb-14">
           <Outlet />
         </main>
         <Footer theme="lecturer" />

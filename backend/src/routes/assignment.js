@@ -5,96 +5,31 @@ const { createNotification, notifyByRole } = require('../services/notificationSe
 
 const prisma = new PrismaClient();
 
-const { extractTextFromUrl } = require('../services/pdfExtractor');
-const { detectAIContent } = require('../services/aiDetector');
-const { checkPlagiarism } = require('../services/plagiarismChecker');
+const { scheduleSubmissionAnalysis } = require('../queues/plagiarismQueue');
 
-// Helper to determine risk category (null AI score is ignored; plagiarism still applies)
-function getRiskCategory(aiScore, plagiarismScore) {
-    const ai = aiScore != null ? Number(aiScore) : 0;
-    const pl = plagiarismScore != null ? Number(plagiarismScore) : 0;
-    if (ai > 80 || pl > 80) return 'High';
-    if (ai > 50 || pl > 50) return 'Medium';
-    return 'Low';
-}
+const LATE_GRACE_DAYS = 3;
 
-function scheduleSubmissionAnalysis(submissionId, assignmentId, fileName, filePath) {
-    process.nextTick(async () => {
-        try {
-            if (!fileName.toLowerCase().endsWith('.pdf')) {
-                await prisma.assignmentSubmission.update({
-                    where: { id: submissionId },
-                    data: {
-                        checkStatus: 'Skipped',
-                        extractedText: null,
-                        aiScore: null,
-                        plagiarismScore: null,
-                        riskCategory: null,
-                        checkedAt: null
-                    }
-                });
-                return;
-            }
+const getGraceEndAt = (deadline) => {
+    const deadlineAt = new Date(deadline);
+    return new Date(deadlineAt.getTime() + LATE_GRACE_DAYS * 24 * 60 * 60 * 1000);
+};
 
-            await prisma.assignmentSubmission.update({
-                where: { id: submissionId },
-                data: { checkStatus: 'Processing' }
-            });
+const mapAssignmentWindow = (assignment) => {
+    const now = new Date();
+    const deadlineAt = new Date(assignment.deadline);
+    const graceEndAt = getGraceEndAt(assignment.deadline);
+    const isLateWindow = now > deadlineAt && now <= graceEndAt;
+    const isSubmissionLocked = now > graceEndAt;
 
-            const text = await extractTextFromUrl(filePath);
-            const { aiScore } = await detectAIContent(text);
-
-            const existingSubmissions = await prisma.assignmentSubmission.findMany({
-                where: {
-                    assignmentId,
-                    id: { not: submissionId },
-                    extractedText: { not: null }
-                },
-                select: { id: true, extractedText: true }
-            });
-
-            const { plagiarismScore, matches } = checkPlagiarism(text, existingSubmissions);
-            const riskCategory = getRiskCategory(aiScore, plagiarismScore);
-
-            await prisma.assignmentSubmission.update({
-                where: { id: submissionId },
-                data: {
-                    extractedText: text,
-                    aiScore,
-                    plagiarismScore,
-                    riskCategory,
-                    checkStatus: 'Completed',
-                    checkedAt: new Date()
-                }
-            });
-
-            if (matches && matches.length > 0) {
-                for (const match of matches) {
-                    await prisma.plagiarismMatch.create({
-                        data: {
-                            assignmentId,
-                            submissionAId: submissionId,
-                            submissionBId: match.submissionId,
-                            similarityScore: match.score
-                        }
-                    });
-                }
-            }
-        } catch (error) {
-            console.error('--- Submission Check Error ---');
-            console.error(`Submission ID: ${submissionId}`);
-            console.error(`Assignment ID: ${assignmentId}`);
-            console.error(`File: ${fileName}`);
-            console.error('Error Details:', error.stack || error.message);
-            console.error('------------------------------');
-
-            await prisma.assignmentSubmission.update({
-                where: { id: submissionId },
-                data: { checkStatus: 'Failed' }
-            });
-        }
-    });
-}
+    return {
+        ...assignment,
+        lateWindowDays: LATE_GRACE_DAYS,
+        lateWindowEndsAt: graceEndAt,
+        isLateWindow,
+        isSubmissionLocked,
+        effectiveStatus: assignment.status === 'Closed' || isSubmissionLocked ? 'Closed' : 'Open'
+    };
+};
 
 // POST /api/assignment/create  — Lecturer creates an assignment
 router.post('/create', async (req, res) => {
@@ -165,7 +100,9 @@ router.get('/list', async (req, res) => {
             orderBy: { createdAt: 'desc' }
         });
 
-        res.status(200).json({ success: true, assignments });
+        const enhancedAssignments = assignments.map(mapAssignmentWindow);
+
+        res.status(200).json({ success: true, assignments: enhancedAssignments });
     } catch (error) {
         console.error("Assignment List Error:", error);
         res.status(500).json({ success: false, message: 'Server error fetching assignments' });
@@ -192,7 +129,9 @@ router.get('/lecturer', async (req, res) => {
             orderBy: { createdAt: 'desc' }
         });
 
-        res.status(200).json({ success: true, assignments });
+        const enhancedAssignments = assignments.map(mapAssignmentWindow);
+
+        res.status(200).json({ success: true, assignments: enhancedAssignments });
     } catch (error) {
         console.error("Lecturer Assignment List Error:", error);
         res.status(500).json({ success: false, message: 'Server error fetching lecturer assignments' });
@@ -246,7 +185,7 @@ router.get('/:id', async (req, res) => {
             return res.status(404).json({ success: false, message: 'Assignment not found' });
         }
 
-        res.status(200).json({ success: true, assignment });
+        res.status(200).json({ success: true, assignment: mapAssignmentWindow(assignment) });
     } catch (error) {
         console.error("Assignment Fetch Error:", error);
         res.status(500).json({ success: false, message: 'Server error fetching assignment' });
@@ -300,7 +239,9 @@ router.delete('/:id', async (req, res) => {
 // POST /api/assignment/submit  — Student submits a file (Supabase URL tracked in DB)
 router.post('/submit', async (req, res) => {
     try {
-        const { assignmentId, studentId, fileName, filePath } = req.body;
+        const { assignmentId, studentId, fileName, filePath, submissionMessage } = req.body;
+        const normalizedMessage = typeof submissionMessage === 'string' ? submissionMessage.trim() : '';
+        const safeSubmissionMessage = normalizedMessage.length > 0 ? normalizedMessage.slice(0, 1000) : null;
 
         if (!assignmentId || !studentId || !fileName || !filePath) {
             return res.status(400).json({ success: false, message: 'assignmentId, studentId, fileName, and filePath are required.' });
@@ -312,7 +253,18 @@ router.post('/submit', async (req, res) => {
             return res.status(404).json({ success: false, message: 'Assignment not found.' });
         }
 
-        const isLate = new Date() > new Date(assignment.deadline);
+        const now = new Date();
+        const deadlineAt = new Date(assignment.deadline);
+        const graceEndAt = getGraceEndAt(assignment.deadline);
+
+        if (now > graceEndAt) {
+            return res.status(400).json({
+                success: false,
+                message: `Submission window has closed. Late submissions are only allowed for ${LATE_GRACE_DAYS} days after the deadline.`
+            });
+        }
+
+        const isLate = now > deadlineAt;
 
         // Check for duplicate submission
         const existing = await prisma.assignmentSubmission.findFirst({
@@ -330,6 +282,7 @@ router.post('/submit', async (req, res) => {
                 data: {
                     fileName,
                     filePath,
+                    submissionMessage: safeSubmissionMessage,
                     late: isLate,
                     submittedAt: new Date(),
                     checkStatus: 'Pending',
@@ -351,6 +304,7 @@ router.post('/submit', async (req, res) => {
                 studentId,
                 fileName,
                 filePath,
+                submissionMessage: safeSubmissionMessage,
                 late: isLate,
                 checkStatus: 'Pending'
             }

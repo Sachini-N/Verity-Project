@@ -1,15 +1,18 @@
 import { useParams } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Loader2, Github, RefreshCw, GitBranch, X, Plus } from 'lucide-react';
+import { Loader2, Github, RefreshCw, GitBranch, X, Plus, Activity, Zap, ShieldCheck, ExternalLink, Binary } from 'lucide-react';
 
 export default function GithubIntegration() {
   const { id } = useParams();
+  const INITIAL_COMMITS_VISIBLE = 6;
+  const isLecturerView = typeof window !== 'undefined' && window.location.pathname.includes('/lecturer');
   
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [hoveredCommit, setHoveredCommit] = useState<string | null>(null);
   const [showLinkModal, setShowLinkModal] = useState(false);
+  const [showAllCommits, setShowAllCommits] = useState(false);
   
   const [repoData, setRepoData] = useState<any>(null);
   const [commits, setCommits] = useState<any[]>([]);
@@ -108,43 +111,104 @@ export default function GithubIntegration() {
     }
   };
 
-  const colorPalettes = [
-    { color: 'from-emerald-500 to-emerald-600', bg: 'bg-emerald-50', text: 'text-emerald-700' },
-    { color: 'from-amber-500 to-amber-600', bg: 'bg-amber-50', text: 'text-amber-700' },
-    { color: 'from-indigo-500 to-indigo-600', bg: 'bg-indigo-50', text: 'text-indigo-700' },
-    { color: 'from-rose-500 to-rose-600', bg: 'bg-rose-50', text: 'text-rose-700' },
-    { color: 'from-teal-500 to-teal-600', bg: 'bg-teal-50', text: 'text-teal-700' },
-  ];
+  const colorPalettes = isLecturerView
+    ? [
+        { color: 'from-emerald-500 to-emerald-600', bg: 'bg-emerald-50', text: 'text-emerald-700' },
+        { color: 'from-teal-500 to-teal-600', bg: 'bg-teal-50', text: 'text-teal-700' },
+        { color: 'from-lime-500 to-lime-600', bg: 'bg-lime-50', text: 'text-lime-700' },
+        { color: 'from-cyan-500 to-cyan-600', bg: 'bg-cyan-50', text: 'text-cyan-700' },
+        { color: 'from-amber-500 to-amber-600', bg: 'bg-amber-50', text: 'text-amber-700' },
+      ]
+    : [
+        { color: 'from-indigo-500 to-indigo-600', bg: 'bg-indigo-50', text: 'text-indigo-700' },
+        { color: 'from-teal-500 to-teal-600', bg: 'bg-teal-50', text: 'text-teal-700' },
+        { color: 'from-amber-500 to-amber-600', bg: 'bg-amber-50', text: 'text-amber-700' },
+        { color: 'from-sky-500 to-sky-600', bg: 'bg-sky-50', text: 'text-sky-700' },
+        { color: 'from-violet-500 to-violet-600', bg: 'bg-violet-50', text: 'text-violet-700' },
+      ];
+
+  const matchedContributors = impacts.filter((i) => i.isMatched).length;
+  const avgImpact = impacts.length ? Math.round(impacts.reduce((acc, i) => acc + (i.percentage || 0), 0) / impacts.length) : 0;
+
+  const statCards = isLecturerView
+    ? [
+        { label: 'Total Commits', value: stats.total.toLocaleString(), icon: GitBranch, tone: 'from-emerald-500 to-emerald-600' },
+        { label: 'Matched Contributors', value: matchedContributors.toString(), icon: ShieldCheck, tone: 'from-teal-500 to-teal-600' },
+        { label: 'Additions', value: stats.additions.toLocaleString(), icon: Zap, tone: 'from-cyan-500 to-cyan-600' },
+        { label: 'Avg Impact', value: `${avgImpact}%`, icon: Activity, tone: 'from-lime-500 to-lime-600' },
+      ]
+    : [
+        { label: 'Total Commits', value: stats.total.toLocaleString(), icon: GitBranch, tone: 'from-indigo-500 to-indigo-600' },
+        { label: 'Matched Contributors', value: matchedContributors.toString(), icon: ShieldCheck, tone: 'from-teal-500 to-teal-600' },
+        { label: 'Additions', value: stats.additions.toLocaleString(), icon: Zap, tone: 'from-sky-500 to-sky-600' },
+        { label: 'Avg Impact', value: `${avgImpact}%`, icon: Activity, tone: 'from-amber-500 to-amber-600' },
+      ];
+
+  const visibleCommits = showAllCommits ? commits : commits.slice(0, INITIAL_COMMITS_VISIBLE);
 
   if (loading && !repoData) {
     return (
       <div className="flex justify-center items-center py-32">
-        <Loader2 className="w-8 h-8 text-emerald-600 animate-spin" />
+        <div className="flex flex-col items-center gap-4">
+          <div className={`w-16 h-16 rounded-2xl border flex items-center justify-center shadow-sm ${isLecturerView ? 'border-emerald-100 bg-emerald-50' : 'border-indigo-100 bg-indigo-50'}`}>
+            <Loader2 className={`w-8 h-8 animate-spin ${isLecturerView ? 'text-emerald-600' : 'text-indigo-600'}`} />
+          </div>
+          <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">Booting Code Signals...</p>
+        </div>
       </div>
     );
   }
 
   if (!repoData) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 px-4 text-center border border-slate-200 border-dashed rounded-3xl bg-white max-w-4xl mx-auto shadow-sm">
-        <div className="w-20 h-20 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mb-6">
-          <Github className="w-10 h-10" />
+      <div className={`max-w-5xl mx-auto rounded-[2rem] border bg-white shadow-sm overflow-hidden ${isLecturerView ? 'border-emerald-100' : 'border-indigo-100'}`}>
+        <div className="grid grid-cols-1 lg:grid-cols-2">
+          <div className={`relative p-10 text-white overflow-hidden ${isLecturerView ? 'bg-gradient-to-br from-emerald-600 via-emerald-500 to-teal-500' : 'bg-gradient-to-br from-indigo-600 via-indigo-500 to-teal-500'}`}>
+            <div className="absolute -top-20 -right-16 w-64 h-64 rounded-full bg-white/20 blur-3xl" />
+            <div className="absolute -bottom-16 left-8 w-56 h-56 rounded-full bg-white/10 blur-3xl" />
+
+            <div className="relative z-10">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-[0.2em] border border-white/25 bg-white/15 mb-5">
+                <Activity className="w-3.5 h-3.5" /> Code Repo Intelligence
+              </div>
+              <h2 className="text-4xl font-black leading-tight tracking-tight mb-3">No Repository Linked</h2>
+              <p className={`text-sm leading-relaxed max-w-md ${isLecturerView ? 'text-emerald-100' : 'text-indigo-100'}`}>
+                Connect your GitHub repository to unlock real-time commit signals, branch analytics, and contribution visibility for every teammate.
+              </p>
+            </div>
+          </div>
+
+          <div className="p-10 flex flex-col justify-between gap-8 bg-gradient-to-br from-white to-slate-50">
+            <div>
+              <h3 className="text-xl font-black text-slate-900 mb-2">Start The Signal Feed</h3>
+              <p className="text-sm text-slate-500 font-medium">
+                Add repository owner and name once. Verity will auto-sync commits and map contributions.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className={`rounded-xl border p-4 ${isLecturerView ? 'border-emerald-100 bg-emerald-50/70' : 'border-indigo-100 bg-indigo-50/70'}`}>
+                <p className={`text-[10px] font-black uppercase tracking-widest mb-1 ${isLecturerView ? 'text-emerald-500' : 'text-indigo-500'}`}>Commits</p>
+                <p className={`text-2xl font-black ${isLecturerView ? 'text-emerald-700' : 'text-indigo-700'}`}>Live</p>
+              </div>
+              <div className="rounded-xl border border-teal-100 bg-teal-50/70 p-4">
+                <p className="text-[10px] font-black uppercase tracking-widest text-teal-500 mb-1">Impact</p>
+                <p className="text-2xl font-black text-teal-700">Mapped</p>
+              </div>
+            </div>
+
+            <button onClick={() => setShowLinkModal(true)} className={`inline-flex items-center justify-center gap-2 rounded-xl text-white font-bold py-3.5 px-6 shadow-lg transition-all ${isLecturerView ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/20' : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-500/20'}`}>
+              <Plus className="w-4 h-4" /> Link GitHub Repository
+            </button>
+          </div>
         </div>
-        <h2 className="text-3xl font-black text-slate-800 mb-2">No Repository Linked</h2>
-        <p className="text-slate-500 max-w-lg mx-auto mb-8 leading-relaxed">
-          Connect a GitHub repository to this project to automatically track branches, commits, and calculate individual developer impact.
-        </p>
-        <button onClick={() => setShowLinkModal(true)} className="btn-primary px-8 py-3 text-sm flex items-center gap-2">
-          <Plus className="w-4 h-4" />
-          Link GitHub Repository
-        </button>
 
         {showLinkModal && (
           <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 text-left">
-            <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
-              <div className="bg-slate-900 px-6 py-4 flex justify-between items-center text-white">
+            <div className={`bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden border ${isLecturerView ? 'border-emerald-100' : 'border-indigo-100'}`}>
+              <div className={`px-6 py-4 flex justify-between items-center text-white ${isLecturerView ? 'bg-gradient-to-r from-emerald-600 to-emerald-500' : 'bg-gradient-to-r from-indigo-600 to-indigo-500'}`}>
                 <h3 className="font-bold">Link Repository</h3>
-                <button onClick={() => setShowLinkModal(false)}><X className="w-5 h-5 hover:text-red-400" /></button>
+                <button onClick={() => setShowLinkModal(false)}><X className={`w-5 h-5 ${isLecturerView ? 'hover:text-emerald-100' : 'hover:text-indigo-100'}`} /></button>
               </div>
               <form onSubmit={handleLinkSubmit} className="p-6 space-y-4">
                 <div>
@@ -195,188 +259,196 @@ export default function GithubIntegration() {
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-700 max-w-7xl mx-auto">
-      {/* Header Container */}
-      <div className="relative overflow-hidden rounded-2xl p-8 border border-slate-200 bg-white shadow-sm">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-slate-50 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
-        
-        <div className="relative z-10 flex flex-col md:flex-row justify-between md:items-center gap-8">
-          <div className="flex items-center gap-6">
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 shadow-sm text-slate-700">
-              <svg className="w-9 h-9" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
-              </svg>
+    <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-700">
+      <div className={`relative overflow-hidden rounded-[2rem] border p-8 shadow-sm ${isLecturerView ? 'border-emerald-100 bg-gradient-to-r from-emerald-50/80 via-white to-teal-50/45' : 'border-indigo-100 bg-gradient-to-r from-indigo-50/80 via-white to-teal-50/45'}`}>
+        <div className={`absolute -top-20 -right-20 w-64 h-64 rounded-full blur-3xl ${isLecturerView ? 'bg-emerald-200/35' : 'bg-indigo-200/35'}`} />
+        <div className="absolute -bottom-16 left-1/4 w-56 h-56 rounded-full bg-teal-200/30 blur-3xl" />
+
+        <div className="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+          <div className="flex items-start gap-5">
+            <div className={`w-14 h-14 rounded-2xl bg-white border shadow-sm flex items-center justify-center shrink-0 ${isLecturerView ? 'border-emerald-100 text-emerald-600' : 'border-indigo-100 text-indigo-600'}`}>
+              <Github className="w-7 h-7" />
             </div>
             <div>
-              <h2 className="text-3xl font-bold text-slate-900 tracking-tight flex items-center gap-3">
-                {repoData.owner} / {repoData.repoName}
-              </h2>
-              <p className="text-sm text-slate-500 mt-1 flex items-center gap-2">
-                <span>Manage and track all codebase contributions</span>
-              </p>
+              <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-[0.2em] border bg-white mb-2 ${isLecturerView ? 'border-emerald-100 text-emerald-600' : 'border-indigo-100 text-indigo-600'}`}>
+                <Binary className="w-3.5 h-3.5" /> Repository Signal Deck
+              </div>
+              <h2 className="text-3xl md:text-4xl font-black tracking-tight text-slate-900 leading-tight">{repoData.owner} / {repoData.repoName}</h2>
+              <p className="text-sm text-slate-500 mt-2 font-medium">A live intelligence board for commit velocity and contributor impact.</p>
             </div>
           </div>
-          
-          <div className="flex items-center gap-4">
-            <button 
+
+          <div className="flex flex-wrap items-center gap-3">
+            <button
               onClick={handleSync}
               disabled={syncing}
-              className="bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 px-5 py-2.5 rounded-xl text-sm font-bold shadow-sm transition-colors flex items-center gap-2 disabled:opacity-50"
+              className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold border transition-colors disabled:opacity-50 ${isLecturerView ? 'text-emerald-700 bg-emerald-50 border-emerald-200 hover:bg-emerald-100' : 'text-indigo-700 bg-indigo-50 border-indigo-200 hover:bg-indigo-100'}`}
             >
               <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
               {syncing ? 'Syncing Repo...' : 'Sync Now'}
             </button>
-            <a 
+            <a
               href={repoData.url}
               target="_blank"
               rel="noreferrer"
-              className="bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-4 py-2.5 rounded-xl text-sm font-bold shadow-sm transition-colors flex items-center gap-2"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 transition-colors"
             >
-              <Github className="w-4 h-4 text-slate-500" />
-              Open GitHub
+              <ExternalLink className="w-4 h-4 text-slate-500" /> Open GitHub
             </a>
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-         {/* Main Activity Feed */}
-         <div className="xl:col-span-2 flex flex-col gap-6">
-            <div className="flex justify-between items-end px-1">
-               <div>
-                 <h3 className="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
-                   <GitBranch className="w-5 h-5 text-teal-500" />
-                   Recent Commit History
-                 </h3>
-                 <p className="text-sm text-slate-500 mt-1">Showing the latest {commits.length} commits synced from the repository</p>
-               </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {statCards.map((item) => (
+          <div key={item.label} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm hover:shadow-md transition-all">
+            <div className={`mb-3 inline-flex h-10 w-10 items-center justify-center rounded-xl text-white bg-gradient-to-br ${item.tone} shadow-sm`}>
+              <item.icon className="w-5 h-5" />
             </div>
+            <p className="text-2xl font-black tracking-tight text-slate-900">{item.value}</p>
+            <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400">{item.label}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+        <div className="xl:col-span-2 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="mb-5 flex items-end justify-between">
+            <div>
+              <h3 className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+                <GitBranch className={`w-5 h-5 ${isLecturerView ? 'text-emerald-600' : 'text-indigo-600'}`} /> Commit Signal Stream
+              </h3>
+              <p className="text-sm text-slate-500 mt-1">
+                Showing {visibleCommits.length} of {commits.length} commits with author and hash context.
+              </p>
+            </div>
+          </div>
+
+          <div className="relative pl-6">
+            <div className={`absolute left-2 top-0 bottom-0 w-0.5 bg-gradient-to-b via-slate-200 to-transparent ${isLecturerView ? 'from-emerald-200' : 'from-indigo-200'}`} />
 
             <div className="flex flex-col gap-3">
               {commits.length === 0 ? (
-                <div className="text-center p-10 bg-white border border-slate-200 rounded-2xl shadow-sm">
+                <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50/60 p-10 text-center">
                   <p className="text-slate-500 font-medium">No commits found. Try syncing the repository.</p>
                 </div>
               ) : (
-                commits.map((c, idx) => (
-                  <div 
-                    key={c.id} 
-                    className={`group relative flex gap-4 sm:gap-5 p-5 rounded-xl bg-white border transition-all duration-200 overflow-hidden ${hoveredCommit === c.id ? 'border-slate-300 shadow-md shadow-slate-200/50' : 'border-slate-200 hover:border-slate-300'}`}
-                    onMouseEnter={() => setHoveredCommit(c.id)}
-                    onMouseLeave={() => setHoveredCommit(null)}
-                  >
-                    <div className="shrink-0 mt-0.5">
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${colorPalettes[idx % colorPalettes.length].bg} ${colorPalettes[idx % colorPalettes.length].text}`}>
-                        {c.authorName.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase()}
-                      </div>
-                    </div>
-                    
-                    <div className="flex-1 min-w-0">
-                      <div className="flex justify-between items-start gap-4">
-                        <h4 className="font-semibold text-slate-900 text-[15px] group-hover:text-teal-600 transition-colors truncate">
-                          {c.message.split('\n')[0]}
-                        </h4>
-                        <span className="text-xs font-medium text-slate-500 whitespace-nowrap shrink-0">
+                visibleCommits.map((c, idx) => {
+                  const style = colorPalettes[idx % colorPalettes.length];
+                  return (
+                    <div
+                      key={c.id}
+                      className={`group relative rounded-2xl border bg-white p-4 transition-all duration-200 ${hoveredCommit === c.id ? (isLecturerView ? 'border-emerald-300 shadow-md shadow-emerald-100/60' : 'border-indigo-300 shadow-md shadow-indigo-100/60') : 'border-slate-200 hover:border-slate-300'}`}
+                      onMouseEnter={() => setHoveredCommit(c.id)}
+                      onMouseLeave={() => setHoveredCommit(null)}
+                    >
+                      <div className={`absolute left-[-26px] top-6 h-4 w-4 rounded-full border-4 border-white ${style.bg}`} />
+
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="min-w-0 flex-1">
+                          <h4 className={`truncate text-[15px] font-bold text-slate-900 transition-colors ${isLecturerView ? 'group-hover:text-emerald-600' : 'group-hover:text-indigo-600'}`}>
+                            {c.message.split('\n')[0]}
+                          </h4>
+                          <div className="mt-2 flex flex-wrap items-center gap-2.5">
+                            <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold ${style.bg} ${style.text}`}>
+                              <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-white/80 text-[10px] font-black">
+                                {c.authorName.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase()}
+                              </span>
+                              {c.authorName}
+                            </span>
+                            <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-bold text-slate-500 font-mono">
+                              {c.commitHash.substring(0, 7)}
+                            </span>
+                          </div>
+                        </div>
+
+                        <span className="shrink-0 text-xs font-bold text-slate-400">
                           {new Date(c.date).toLocaleDateString()}
                         </span>
                       </div>
-                      
-                      <div className="flex flex-wrap items-center gap-3 mt-2.5">
-                        <div className="flex items-center gap-1.5 text-xs font-medium text-slate-600">
-                          <svg className="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
-                          {c.authorName}
-                        </div>
-                        
-                        <div className="flex items-center gap-1.5 text-xs font-medium text-slate-500 bg-slate-50 px-2 py-0.5 rounded-md border border-slate-200 font-mono ml-auto">
-                          <svg className="w-3 h-3 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" /></svg>
-                          {c.commitHash.substring(0, 7)}
-                        </div>
-                      </div>
                     </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
-         </div>
 
-         {/* Right Sidebar */}
-         <div className="flex flex-col gap-6">
-           {/* Metric Cards */}
-           <div className="grid grid-cols-2 gap-4">
-              <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                <div className="flex justify-between items-start mb-2">
-                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Additions</span>
-                  <div className="p-1.5 bg-emerald-50 rounded-lg text-emerald-500">
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+            {commits.length > INITIAL_COMMITS_VISIBLE && (
+              <div className="mt-5 flex justify-center">
+                <button
+                  type="button"
+                  onClick={() => setShowAllCommits((prev) => !prev)}
+                  className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2 text-xs font-black uppercase tracking-widest transition-colors ${isLecturerView ? 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100' : 'border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100'}`}
+                >
+                  {showAllCommits ? 'Show Less' : `View More (${commits.length - INITIAL_COMMITS_VISIBLE})`}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-6">
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <h3 className="text-sm font-black uppercase tracking-[0.15em] text-slate-400 mb-4">Code Throughput</h3>
+            <div className="space-y-4">
+              {[
+                { label: 'Additions', value: stats.additions, color: 'bg-teal-500', text: 'text-teal-700' },
+                { label: 'Deletions', value: stats.deletions, color: 'bg-amber-500', text: 'text-amber-700' },
+                { label: 'Total Commits', value: stats.total, color: isLecturerView ? 'bg-emerald-500' : 'bg-indigo-500', text: isLecturerView ? 'text-emerald-700' : 'text-indigo-700' },
+              ].map((m) => (
+                <div key={m.label}>
+                  <div className="mb-1.5 flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">{m.label}</span>
+                    <span className={`text-sm font-black ${m.text}`}>{m.value.toLocaleString()}</span>
+                  </div>
+                  <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
+                    <div
+                      className={`h-full ${m.color} rounded-full transition-all duration-700`}
+                      style={{ width: `${m.label === 'Additions' ? Math.min(100, stats.additions / 50) : m.label === 'Deletions' ? Math.min(100, stats.deletions / 50) : Math.min(100, stats.total * 3)}%` }}
+                    />
                   </div>
                 </div>
-                <div>
-                  <span className="text-2xl font-black text-emerald-700 flex items-baseline gap-2">
-                    {stats.additions.toLocaleString()}
-                  </span>
-                </div>
-              </div>
-              
-              <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                <div className="flex justify-between items-start mb-2">
-                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Deletions</span>
-                  <div className="p-1.5 bg-rose-50 rounded-lg text-rose-500">
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" /></svg>
-                  </div>
-                </div>
-                <div>
-                  <span className="text-2xl font-black text-rose-700 flex items-baseline gap-2">
-                    {stats.deletions.toLocaleString()}
-                  </span>
-                </div>
-              </div>
-           </div>
+              ))}
+            </div>
+          </div>
 
-           {/* Impact Chart */}
-           <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-[17px] font-bold text-slate-900 tracking-tight">Developer Impact (Commits)</h3>
-              </div>
-              
-              <div className="space-y-6">
-                {impacts.length === 0 ? (
-                  <p className="text-sm text-slate-500 text-center py-4">No impact data available yet.</p>
-                ) : (
-                  impacts.map((impact, i) => {
-                    const style = colorPalettes[i % colorPalettes.length];
-                    return (
-                      <div key={i} className="group cursor-pointer">
-                        <div className="flex justify-between items-end mb-2">
-                          <div className="flex items-center gap-2.5">
-                            <span className={`text-sm font-bold ${impact.isMatched ? 'text-slate-900' : 'text-slate-500 italic'}`}>
-                              {impact.name}
-                            </span>
-                            {impact.isMatched && (
-                              <svg className="w-3.5 h-3.5 text-blue-500 fill-current" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
-                            )}
-                          </div>
-                          <div className="text-right">
-                            <span className="text-xs font-bold text-slate-800">{impact.commits} <span className="text-slate-400 font-medium">commits</span></span>
-                            <span className="text-[10px] font-bold ml-2 text-slate-400">({impact.percentage}%)</span>
-                          </div>
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="mb-5 flex items-center justify-between">
+              <h3 className="text-[17px] font-black text-slate-900 tracking-tight">Contributor Impact Map</h3>
+            </div>
+
+            <div className="space-y-5">
+              {impacts.length === 0 ? (
+                <p className="py-4 text-center text-sm font-medium text-slate-500">No impact data available yet.</p>
+              ) : (
+                impacts.map((impact, i) => {
+                  const style = colorPalettes[i % colorPalettes.length];
+                  return (
+                    <div key={i} className="group">
+                      <div className="mb-2 flex items-end justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className={`text-sm font-bold ${impact.isMatched ? 'text-slate-900' : 'text-slate-500 italic'}`}>
+                            {impact.name}
+                          </span>
+                          {impact.isMatched && <ShieldCheck className="w-3.5 h-3.5 text-teal-500" />}
                         </div>
-                        <div className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                          <div 
-                            className={`h-full bg-gradient-to-r ${style.color} rounded-full transition-all duration-1000 ease-out`}
-                            style={{ width: `${impact.percentage}%` }}
-                          ></div>
-                        </div>
-                        <div className="flex justify-between mt-1 px-1">
-                           <span className="text-[9px] font-bold text-emerald-600 uppercase tracking-widest">+{impact.additions}</span>
-                           <span className="text-[9px] font-bold text-rose-600 uppercase tracking-widest">-{impact.deletions}</span>
-                        </div>
+                        <span className="text-xs font-black text-slate-400">{impact.percentage}%</span>
                       </div>
-                    );
-                  })
-                )}
-              </div>
-           </div>
-         </div>
+
+                      <div className="h-2.5 w-full rounded-full bg-slate-100 overflow-hidden">
+                        <div className={`h-full rounded-full bg-gradient-to-r ${style.color} transition-all duration-1000`} style={{ width: `${impact.percentage}%` }} />
+                      </div>
+
+                      <div className="mt-1.5 flex justify-between px-0.5">
+                        <span className="text-[10px] font-black uppercase tracking-wider text-teal-600">+{impact.additions}</span>
+                        <span className="text-[10px] font-black uppercase tracking-wider text-amber-600">-{impact.deletions}</span>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

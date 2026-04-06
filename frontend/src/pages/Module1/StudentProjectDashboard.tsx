@@ -4,6 +4,8 @@ import axios from 'axios';
 import { LayoutDashboard, CheckSquare, Github, Folder, UploadCloud, Settings, Users, FileText } from 'lucide-react';
 import { motion } from 'framer-motion';
 import ProjectSettings from './ProjectSettings';
+import XPProgressBar from '../../components/XPProgressBar';
+import BadgeGrid from '../../components/BadgeGrid';
 
 export default function StudentProjectDashboard() {
   const { id } = useParams();
@@ -74,7 +76,7 @@ export default function StudentProjectDashboard() {
       
       <div className="flex flex-col xl:flex-row gap-8 items-start w-full">
         {/* Sticky Vertical Sidebar */}
-        <div className="w-full xl:w-64 shrink-0 xl:sticky xl:top-24 z-40">
+        <div className="w-full xl:w-64 shrink-0 xl:sticky xl:top-24 z-40 space-y-4">
           <nav className="flex flex-col gap-2 p-3 bg-white/50 backdrop-blur-2xl border border-white/80 shadow-[0_4px_15px_-3px_rgba(0,0,0,0.03),inset_0_1px_1px_rgba(255,255,255,0.9)] rounded-[2rem]">
             {tabs.map(tab => {
               const active = tab.exact 
@@ -107,6 +109,12 @@ export default function StudentProjectDashboard() {
               );
             })}
           </nav>
+
+          {/* Gamification Widget - XP Progress */}
+          {id && <XPProgressBar userId={id} />}
+
+          {/* Gamification Widget - Badges */}
+          {id && <BadgeGrid userId={id} />}
         </div>
 
         {/* Dynamic Tab Content Area */}

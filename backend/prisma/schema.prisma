@@ -22,6 +22,10 @@ model User {
   linkedin     String?
   skills       String?
 
+  // Gamification
+  xpPoints     Int      @default(0)
+  badges       String?  // Commma separated list of badge IDs
+
   // Academic Relations
   semesterId   String?
   semester     Semester? @relation(fields: [semesterId], references: [id])
@@ -312,6 +316,7 @@ model AssignmentSubmission {
   student       User       @relation("StudentAssignmentSubmissions", fields: [studentId], references: [id])
   fileName      String
   filePath      String
+  submissionMessage String?
   late          Boolean    @default(false)
 
   // AI & Plagiarism Check Results

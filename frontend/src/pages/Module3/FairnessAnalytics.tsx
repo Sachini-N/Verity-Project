@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
 import { ShieldCheck, CheckCircle, GitCommit, Clock, Loader2, Github } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 const API = 'http://localhost:5000/api/project';
 
@@ -130,133 +131,147 @@ export default function FairnessAnalytics() {
 
   return (
     <div className="animate-fade-up space-y-8">
-      {/* Page Header */}
-      <div className="page-header flex items-start justify-between">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className={`badge ${isLecturer ? 'badge-amber' : 'badge-sage'}`}>
-              {isLecturer ? 'Lecturer View' : 'Student Portal'}
-            </span>
-            <span className="text-slate-400 text-sm font-medium">{projectTitle}</span>
+      <motion.section
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+        className="relative overflow-hidden rounded-[1.9rem] border border-emerald-100 bg-gradient-to-br from-white via-[#f7fcfa] to-[#edf9f4] p-6 md:p-7 shadow-sm"
+      >
+        <div className="absolute -top-20 -right-16 h-64 w-64 rounded-full bg-emerald-200/25 blur-3xl" />
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="inline-flex items-center rounded-full border border-emerald-200 bg-white px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-emerald-700">
+                {isLecturer ? 'Lecturer View' : 'Student Portal'}
+              </span>
+              <span className="text-slate-400 text-sm font-semibold">{projectTitle}</span>
+            </div>
+            <h1 className="text-4xl md:text-[2.7rem] font-black tracking-tight text-slate-900">Contribution Fairness</h1>
+            <p className="text-slate-600 font-medium text-lg mt-2 max-w-4xl">
+              Signal-driven fairness view combining task completion, synced GitHub activity, and weekly reporting consistency.
+            </p>
           </div>
-          <h1 className="page-title">Contribution Fairness</h1>
-          <p className="page-subtitle">
-            Data-driven analysis using task completion, synced GitHub activity, and weekly reporting consistency.
-          </p>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="rounded-2xl border border-slate-200 bg-white px-6 py-5 text-center min-w-[120px]">
+              <div className="text-3xl font-black text-emerald-700">{teamAvg}</div>
+              <div className="text-xs font-bold uppercase tracking-widest text-slate-400 mt-1">Team Average</div>
+            </div>
+            <div className={`rounded-2xl border px-6 py-5 text-center min-w-[120px] ${flagged.length > 0 ? 'border-red-200 bg-red-50' : 'border-emerald-200 bg-emerald-50'}`}>
+              <div className={`text-3xl font-black ${flagged.length > 0 ? 'text-red-600' : 'text-emerald-600'}`}>{flagged.length}</div>
+              <div className="text-xs font-bold uppercase tracking-widest text-slate-400 mt-1">Flagged</div>
+            </div>
+          </div>
         </div>
-        <div className="hidden sm:flex items-center gap-3">
-          <div className="card p-4 text-center min-w-[100px]">
-            <div className="text-2xl font-black text-emerald-900">{teamAvg}</div>
-            <div className="text-xs font-semibold text-slate-500 mt-0.5">Team Average</div>
-          </div>
-          <div className={`card p-4 text-center min-w-[100px] ${flagged.length > 0 ? 'border-red-200 bg-red-50' : 'border-emerald-200 bg-emerald-50'}`}>
-            <div className={`text-2xl font-black ${flagged.length > 0 ? 'text-red-600' : 'text-emerald-600'}`}>{flagged.length}</div>
-            <div className="text-xs font-semibold text-slate-500 mt-0.5">Flagged</div>
-          </div>
-        </div>
-      </div>
+      </motion.section>
 
       {!loading && showGitHubSyncHint && (
-        <div className="card p-4 border-amber-200 bg-amber-50/60 text-sm font-semibold text-amber-900">
+        <div className="rounded-2xl border border-emerald-200 bg-emerald-50/80 p-4 text-sm text-emerald-900 font-semibold">
           GitHub is linked but no commits are stored yet. Open <strong>GitHub Sync</strong> for this project and run <strong>Sync Now</strong> so fairness can use commit data.
         </div>
       )}
 
       {!loading && showGitHubProfileHint && (
-        <div className="card p-4 border-slate-200 bg-slate-50 text-sm text-slate-700">
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-700 shadow-sm">
           <span className="font-bold text-slate-800">Git commit scores are empty.</span>{' '}
-          Ensure each student’s Verity profile has their <strong>GitHub profile URL</strong> (e.g. <code className="text-xs bg-white px-1 rounded border">https://github.com/alexsmith</code>) so commits map to the right person.
+          Ensure each student’s Verity profile has their <strong>GitHub profile URL</strong> (e.g. <code className="text-xs bg-slate-50 px-1 rounded border">https://github.com/alexsmith</code>) so commits map to the right person.
           For best accuracy, set <strong>GITHUB_TOKEN</strong> on the server so GitHub contributor stats can be used.
         </div>
       )}
 
       {loading && (
-        <div className="card p-10 text-center">
-          <Loader2 className="w-6 h-6 animate-spin text-amber-600 mx-auto mb-3" />
+        <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center shadow-sm">
+          <Loader2 className="w-7 h-7 animate-spin text-emerald-600 mx-auto mb-3" />
           <p className="text-sm font-semibold text-slate-500">Calculating fairness analytics...</p>
         </div>
       )}
 
       {!loading && error && (
-        <div className="card p-6 border-red-200 bg-red-50/50">
+        <div className="rounded-2xl border border-red-200 bg-red-50/70 p-6">
           <p className="text-sm font-semibold text-red-700">{error}</p>
         </div>
       )}
 
       {!loading && !error && members.length === 0 && (
-        <div className="card p-8 text-center">
+        <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
           <p className="text-sm font-semibold text-slate-500">
             No members or activity data found for this project yet.
           </p>
         </div>
       )}
 
-      {/* Member Score Cards */}
       {!loading && !error && members.length > 0 && (
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {members.map((m, idx) => {
-          const isLow = m.score < 60;
-          const isMid = m.score >= 60 && m.score < 80;
-          return (
-            <div key={m.name} className={`card p-6 animate-fade-up-delay-${idx + 1} ${isLow ? 'border-red-200' : isMid ? 'border-amber-200' : 'border-emerald-200'}`}>
-              <div className="flex items-center justify-between mb-2">
-                <div>
-                  <h4 className="font-bold text-slate-900">{m.name}</h4>
-                  <span className={`badge ${m.role === 'Leader' ? 'badge-amber' : 'badge-slate'} mt-1`}>{m.role}</span>
-                </div>
-                <div className="flex flex-col items-end gap-1">
-                  <span className={`badge ${isLow ? 'badge-red' : isMid ? 'badge-amber' : 'badge-green'}`}>
-                    {isLow ? 'At Risk' : isMid ? 'Average' : 'Strong'}
-                  </span>
-                  {isLecturer && m.githubProfileLinked === false && (
-                    <span className="text-[10px] font-bold uppercase tracking-wide text-blue-700 bg-blue-50 border border-blue-100 px-2 py-0.5 rounded">
-                      No GitHub URL
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          {members.map((m, idx) => {
+            const isLow = m.score < 60;
+            const isMid = m.score >= 60 && m.score < 80;
+            return (
+              <motion.div
+                key={m.name}
+                initial={{ opacity: 0, y: 14, scale: 0.99 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ duration: 0.58, delay: idx * 0.04, ease: [0.22, 1, 0.36, 1] }}
+                className={`relative overflow-hidden rounded-[1.5rem] border bg-white p-6 shadow-sm ${isLow ? 'border-red-200' : isMid ? 'border-amber-200' : 'border-emerald-200'}`}
+              >
+                <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${isLow ? 'bg-red-500' : isMid ? 'bg-amber-500' : 'bg-emerald-500'}`} />
+
+                <div className="flex items-center justify-between mb-2 pl-1">
+                  <div>
+                    <h4 className="text-3xl font-black text-slate-900 leading-tight">{m.name}</h4>
+                    <span className={`badge ${m.role === 'Leader' ? 'badge-sage' : 'badge-slate'} mt-1`}>{m.role}</span>
+                  </div>
+                  <div className="flex flex-col items-end gap-1">
+                    <span className={`badge ${isLow ? 'badge-red' : isMid ? 'badge-amber' : 'badge-green'}`}>
+                      {isLow ? 'At Risk' : isMid ? 'Average' : 'Strong'}
                     </span>
-                  )}
+                    {isLecturer && m.githubProfileLinked === false && (
+                      <span className="text-[10px] font-bold uppercase tracking-wide text-emerald-700 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded">
+                        No GitHub URL
+                      </span>
+                    )}
+                  </div>
                 </div>
-              </div>
 
-              <ScoreRing score={m.score} />
+                <ScoreRing score={m.score} />
 
-              <div className="space-y-4 mt-4 bg-slate-50 rounded-xl p-4 border border-slate-100">
-                {[
-                  { label: 'Task Completion', val: m.taskRate, icon: CheckCircle, color: 'bg-emerald-500' },
-                  { label: 'Git Commits',     val: m.gitRate,  icon: GitCommit,   color: 'bg-emerald-500' },
-                  { label: 'Time Consistency',val: m.timeSync, icon: Clock,        color: 'bg-teal-500' },
-                ].map(row => {
-                  const Icon = row.icon;
-                  return (
-                    <div key={row.label}>
-                      <div className="flex justify-between items-center mb-1">
-                        <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-600">
-                          <Icon className="w-3.5 h-3.5 text-slate-400" />
-                          {row.label}
+                <div className="space-y-4 mt-4 bg-slate-50 rounded-xl p-4 border border-slate-100">
+                  {[
+                    { label: 'Task Completion', val: m.taskRate, icon: CheckCircle, color: 'bg-emerald-500' },
+                    { label: 'Git Commits', val: m.gitRate, icon: GitCommit, color: 'bg-emerald-500' },
+                    { label: 'Time Consistency', val: m.timeSync, icon: Clock, color: 'bg-teal-500' },
+                  ].map(row => {
+                    const Icon = row.icon;
+                    return (
+                      <div key={row.label}>
+                        <div className="flex justify-between items-center mb-1">
+                          <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-600">
+                            <Icon className="w-3.5 h-3.5 text-slate-400" />
+                            {row.label}
+                          </div>
+                          <span className="text-xs font-bold text-slate-800">{row.val}%</span>
                         </div>
-                        <span className="text-xs font-bold text-slate-800">{row.val}%</span>
+                        <Bar value={row.val} color={row.color} />
                       </div>
-                      <Bar value={row.val} color={row.color} />
-                    </div>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                </div>
 
-              <div className="mt-3 grid grid-cols-2 gap-2 text-[10px] font-bold text-slate-500 uppercase">
-                <div className="bg-slate-50 rounded-lg border border-slate-100 px-2 py-1.5">
-                  Tasks {m.metrics.doneTasks}/{m.metrics.assignedTasks}
+                <div className="mt-3 grid grid-cols-2 gap-2 text-[10px] font-bold text-slate-500 uppercase">
+                  <div className="bg-slate-50 rounded-lg border border-slate-100 px-2 py-1.5">
+                    Tasks {m.metrics.doneTasks}/{m.metrics.assignedTasks}
+                  </div>
+                  <div className="bg-slate-50 rounded-lg border border-slate-100 px-2 py-1.5">
+                    Commits {m.metrics.gitCommits}
+                  </div>
                 </div>
-                <div className="bg-slate-50 rounded-lg border border-slate-100 px-2 py-1.5">
-                  Commits {m.metrics.gitCommits}
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+              </motion.div>
+            );
+          })}
+        </div>
       )}
 
-      {/* AI Finding Panel (for lecturers) */}
       {!loading && !error && flagged.length > 0 && (
-        <div className="card p-6 border-l-4 border-l-red-500 bg-red-50/50">
+        <section className="rounded-2xl border border-red-200 bg-red-50/60 p-6">
           <div className="flex items-start gap-4">
             <div className="p-2.5 bg-red-100 border border-red-200 rounded-xl mt-0.5">
               <ShieldCheck className="w-5 h-5 text-red-600" />
@@ -275,7 +290,7 @@ export default function FairnessAnalytics() {
               </div>
             </div>
           </div>
-        </div>
+        </section>
       )}
     </div>
   );

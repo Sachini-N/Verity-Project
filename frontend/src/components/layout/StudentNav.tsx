@@ -5,6 +5,7 @@ import NotificationCenter from '../NotificationCenter';
 
 const studentNav = [
   { label: 'Dashboard', path: '/student/projects', exact: true },
+  { label: 'Projects', path: '/student/my-projects' },
   { label: 'Assignments', path: '/student/assignments' },
   { label: 'Announcements', path: '/student/announcements' },
   { label: 'Calendar', path: '/student/calendar' },

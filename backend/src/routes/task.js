@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { PrismaClient } = require('@prisma/client');
 const { createNotification, notifyProjectMembers } = require('../services/notificationService');
+const { addXP } = require('../services/gamificationService');
 
 const prisma = new PrismaClient();
 
@@ -110,6 +111,11 @@ router.put('/:taskId/status', async (req, res) => {
                     changedBy: actorId || 'system'
                 }
             });
+
+            // If task is completed, reward student with XP
+            if (isDone && actorId) {
+                addXP(actorId, 'TASK_COMPLETE').catch(() => {});
+            }
         }
         if (actorId) {
             await prisma.activityLog

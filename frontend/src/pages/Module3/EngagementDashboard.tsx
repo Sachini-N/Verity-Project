@@ -98,7 +98,7 @@ export default function EngagementDashboard() {
       <div className="page-header flex items-start justify-between">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className={`badge ${isLecturer ? 'badge-amber' : 'badge-sage'}`}>
+            <span className={`badge ${isLecturer ? 'badge-sage' : 'badge-sage'}`}>
               {isLecturer ? 'Lecturer View' : 'Student Portal'}
             </span>
             {subtitle ? <span className="text-slate-400 text-sm font-medium">{subtitle}</span> : null}
@@ -112,7 +112,7 @@ export default function EngagementDashboard() {
 
       {loading && (
         <div className="card p-10 text-center">
-          <Loader2 className="w-6 h-6 animate-spin text-amber-600 mx-auto mb-3" />
+          <Loader2 className="w-6 h-6 animate-spin text-emerald-600 mx-auto mb-3" />
           <p className="text-sm font-semibold text-slate-500">Loading engagement analytics...</p>
         </div>
       )}
@@ -159,7 +159,7 @@ export default function EngagementDashboard() {
             <div className="lg:col-span-2 card p-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                  <Zap className="w-4 h-4 text-amber-500" />
+                  <Zap className="w-4 h-4 text-emerald-500" />
                   30-Day Activity Heatmap
                 </h2>
                 <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
@@ -198,19 +198,19 @@ export default function EngagementDashboard() {
                     <div
                       key={`${risk.title}-${risk.member}-${i}`}
                       className={`p-4 rounded-xl border-l-4 ${
-                        risk.color === 'red' ? 'bg-red-50 border-red-500' : 'bg-amber-50 border-amber-500'
+                        risk.color === 'red' ? 'bg-red-50 border-red-500' : 'bg-emerald-50 border-emerald-500'
                       }`}
                     >
                       <div className="flex items-center justify-between mb-1">
                         <h4
                           className={`font-bold text-sm ${
-                            risk.color === 'red' ? 'text-red-800' : 'text-amber-800'
+                            risk.color === 'red' ? 'text-red-800' : 'text-emerald-800'
                           }`}
                         >
                           {risk.title}
                         </h4>
                         <span
-                          className={`badge ${risk.color === 'red' ? 'badge-red' : 'badge-amber'} text-[10px] py-0.5`}
+                          className={`badge ${risk.color === 'red' ? 'badge-red' : 'badge-sage'} text-[10px] py-0.5`}
                         >
                           {risk.level === 'high' ? 'High' : 'Medium'}
                         </span>
@@ -218,7 +218,7 @@ export default function EngagementDashboard() {
                       <p className="text-xs font-semibold text-slate-500 mb-1">{risk.member}</p>
                       <p
                         className={`text-xs leading-relaxed ${
-                          risk.color === 'red' ? 'text-red-700' : 'text-amber-700'
+                          risk.color === 'red' ? 'text-red-700' : 'text-emerald-700'
                         }`}
                       >
                         {risk.detail}

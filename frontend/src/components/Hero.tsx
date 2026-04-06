@@ -42,7 +42,7 @@ const Hero = () => {
                     className="text-6xl sm:text-7xl lg:text-[5.5rem] font-black tracking-tighter text-slate-800 leading-[0.95] mb-6 drop-shadow-sm"
                 >
                     The standard for <br />
-                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-teal-500 to-sky-500 drop-shadow-sm">
+                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-teal-500 to-sky-500 drop-shadow-sm">
                         academic fairness.
                     </span>
                 </motion.h1>
@@ -60,8 +60,8 @@ const Hero = () => {
                             <ArrowRight strokeWidth={2.5} className="ml-2 w-4 h-4 text-indigo-200 group-hover:translate-x-1 transition-transform" />
                         </span>
                     </Link>
-                    <Link to="#demo" className="flex items-center px-8 py-4 text-base font-bold transition-all bg-white/50 backdrop-blur-xl border border-indigo-200 rounded-full text-slate-700 hover:bg-indigo-50 hover:border-indigo-300 hover:text-indigo-600 hover:shadow-[0_4px_15px_-3px_rgba(129,140,248,0.2)] group focus:outline-none">
-                        <span>View Matrix Demo</span>
+                    <Link to="#about" className="flex items-center px-8 py-4 text-base font-bold transition-all bg-white/50 backdrop-blur-xl border border-indigo-200 rounded-full text-slate-700 hover:bg-indigo-50 hover:border-indigo-300 hover:text-indigo-600 hover:shadow-[0_4px_15px_-3px_rgba(129,140,248,0.2)] group focus:outline-none">
+                        <span>See How It Works</span>
                         <ChevronRight strokeWidth={2.5} className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform opacity-70" />
                     </Link>
                 </motion.div>

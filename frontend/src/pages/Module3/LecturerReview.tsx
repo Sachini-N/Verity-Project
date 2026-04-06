@@ -105,7 +105,7 @@ export default function LecturerReview() {
       <div className="page-header flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="badge badge-amber">Lecturer Portal</span>
+            <span className="badge badge-sage">Lecturer Portal</span>
             <span className="text-slate-400 text-sm font-medium">SE3040 · Project #{id}</span>
           </div>
           <h1 className="page-title">Weekly Report Reviews</h1>
@@ -115,7 +115,7 @@ export default function LecturerReview() {
         {/* Summary Stats */}
         <div className="flex gap-4 shrink-0">
           <div className="card p-4 text-center min-w-[90px]">
-            <div className="text-2xl font-black text-amber-600">{pendingCount}</div>
+            <div className="text-2xl font-black text-emerald-600">{pendingCount}</div>
             <div className="text-xs font-semibold text-slate-500 mt-0.5">Pending</div>
           </div>
           <div className="card p-4 text-center min-w-[90px]">
@@ -136,7 +136,7 @@ export default function LecturerReview() {
             key={f}
             onClick={() => setFilter(f)}
             className={`px-5 py-2 rounded-lg text-sm font-semibold capitalize transition-all ${
-              filter === f ? 'bg-white text-emerald-900 shadow-sm border border-slate-200' : 'text-slate-500 hover:text-slate-700'
+              filter === f ? 'bg-white text-emerald-800 shadow-sm border border-emerald-100' : 'text-slate-500 hover:text-slate-700'
             }`}
           >
             {f}
@@ -183,7 +183,7 @@ export default function LecturerReview() {
       ) : (
         <div className="space-y-4">
           {displayedReports.map((rep, idx) => (
-          <div key={rep.id} className={`card p-6 border-l-4 animate-fade-up-delay-${Math.min(idx + 1, 5)} ${rep.status === 'Pending' ? 'border-l-amber-400' : 'border-l-emerald-500'}`}>
+          <div key={rep.id} className={`card p-6 border-l-4 animate-fade-up-delay-${Math.min(idx + 1, 5)} ${rep.status === 'Pending' ? 'border-l-teal-400' : 'border-l-emerald-500'}`}>
             <div className="flex flex-col xl:flex-row gap-6">
               
               {/* Member Info */}
@@ -193,7 +193,7 @@ export default function LecturerReview() {
                 </div>
                 <div>
                   <h4 className="font-bold text-slate-900">{rep.member}</h4>
-                  <span className={`badge ${rep.role === 'Leader' ? 'badge-amber' : 'badge-slate'} mt-1`}>{rep.role}</span>
+                      <span className={`badge ${rep.role === 'Leader' ? 'badge-sage' : 'badge-slate'} mt-1`}>{rep.role}</span>
                   <p className="text-xs text-slate-500 font-semibold mt-1">{rep.indexNumber || 'IT Number not set'}</p>
                   <p className="text-xs text-slate-400 mt-1">{rep.date}</p>
                 </div>
@@ -228,7 +228,7 @@ export default function LecturerReview() {
                 {rep.status === 'Pending' ? (
                   <button
                     onClick={() => setSelectedReport(rep)}
-                    className="btn-primary text-sm px-4 py-2"
+                    className="text-sm px-4 py-2 rounded-xl bg-emerald-700 text-white font-bold hover:bg-emerald-800 transition"
                   >
                     <MessageSquare className="w-3.5 h-3.5" />
                     Write Review
@@ -251,14 +251,14 @@ export default function LecturerReview() {
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
             {/* Modal Header */}
-            <div className="bg-emerald-900 px-6 py-5 flex items-center justify-between">
+                <div className="bg-gradient-to-r from-emerald-800 to-teal-700 px-6 py-5 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-white text-base font-black">
                   {selectedReport.member ? selectedReport.member.charAt(0) : '?'}
                 </div>
                 <div>
                   <h3 className="text-base font-bold text-white">{selectedReport.member}</h3>
-                  <p className="text-xs text-emerald-200 mt-0.5">Week {selectedReport.week} — Review</p>
+                  <p className="text-xs text-emerald-100 mt-0.5">Week {selectedReport.week} — Review</p>
                 </div>
               </div>
               <button

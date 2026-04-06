@@ -12,9 +12,43 @@ router.get('/:id', async (req, res) => {
         const user = await prisma.user.findUnique({
              where: { id },
              select: { 
-                 id: true, name: true, email: true, indexNumber: true, role: true,
-                 phone: true, github: true, linkedin: true, skills: true
-             } // Exclude password
+                 id: true, 
+                 name: true, 
+                 email: true, 
+                 indexNumber: true, 
+                 role: true,
+                 phone: true, 
+                 github: true, 
+                 linkedin: true, 
+                 skills: true,
+                 xpPoints: true,
+                 badges: true,
+                 modules: {
+                    select: {
+                        id: true,
+                        code: true,
+                        name: true
+                    }
+                 },
+                 semester: {
+                    select: {
+                        id: true,
+                        name: true,
+                        year: {
+                            select: {
+                                name: true
+                            }
+                        },
+                        modules: {
+                            select: {
+                                id: true,
+                                code: true,
+                                name: true
+                            }
+                        }
+                    }
+                 }
+             }
         });
 
         if (!user) {
@@ -86,7 +120,32 @@ router.put('/:id', async (req, res) => {
              data: updateData,
              select: { 
                  id: true, name: true, email: true, indexNumber: true, role: true,
-                 phone: true, github: true, linkedin: true, skills: true
+                 phone: true, github: true, linkedin: true, skills: true,
+                 modules: {
+                    select: {
+                        id: true,
+                        code: true,
+                        name: true
+                    }
+                 },
+                 semester: {
+                    select: {
+                        id: true,
+                        name: true,
+                        year: {
+                            select: {
+                                name: true
+                            }
+                        },
+                        modules: {
+                            select: {
+                                id: true,
+                                code: true,
+                                name: true
+                            }
+                        }
+                    }
+                 }
              }
         });
 

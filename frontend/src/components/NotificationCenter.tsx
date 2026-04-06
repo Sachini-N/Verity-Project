@@ -1,8 +1,9 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Bell, X, Check, CheckCheck, Briefcase, CheckSquare, GitPullRequest, FileText, AlertTriangle, Megaphone, Upload, BrainCircuit, Github, Clock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { useSocket } from '../lib/useSocket';
 
 const NOTIFICATION_ICONS: Record<string, { icon: any; color: string; bg: string; border: string }> = {
     PROJECT_CREATED:       { icon: Briefcase,     color: 'text-indigo-500', bg: 'bg-indigo-50', border: 'border-indigo-100' },
@@ -26,6 +27,17 @@ const NOTIFICATION_ICONS: Record<string, { icon: any; color: string; bg: string;
 };
 
 const DEFAULT_ICON_STYLE = { icon: BrainCircuit, color: 'text-slate-500', bg: 'bg-slate-50', border: 'border-slate-200' };
+
+const MANAGER_NOTIFICATION_TYPES = new Set([
+    'PROJECT_CREATED',
+    'PROJECT_APPROVED',
+    'PROJECT_REJECTED',
+    'HIGH_RISK',
+    'FAIRNESS_ALERT',
+    'SUBMISSION_FLAGGED'
+]);
+
+type ManagerTab = 'all' | 'requests' | 'risks';
 
 function timeAgo(dateStr: string): string {
     const now = Date.now();
@@ -56,44 +68,113 @@ export default function NotificationCenter() {
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);
     const [loading, setLoading] = useState(false);
+    const [managerTab, setManagerTab] = useState<ManagerTab>('all');
     const panelRef = useRef<HTMLDivElement>(null);
     const navigate = useNavigate();
+    const isLecturerView = window.location.pathname.startsWith('/lecturer');
+    const isManagerView = window.location.pathname.startsWith('/manager');
 
     const getUserId = useCallback(() => {
         try {
-            const data = JSON.parse(localStorage.getItem('user') || '{}');
+            const data = JSON.parse(sessionStorage.getItem('user') || '{}');
             return data.user?.id || data.id || null;
         } catch { return null; }
     }, []);
+
+    const getUserRole = useCallback(() => {
+        try {
+            const data = JSON.parse(sessionStorage.getItem('user') || '{}');
+            return String(data.user?.role || data.role || '').toLowerCase();
+        } catch {
+            return '';
+        }
+    }, []);
+
+    const getScope = useCallback(() => {
+        const role = getUserRole();
+        if (role === 'manager') return 'manager';
+        return undefined;
+    }, [getUserRole]);
+
+    const matchesScope = useCallback((notification: Notification) => {
+        const scope = getScope();
+        if (scope !== 'manager') return true;
+        return MANAGER_NOTIFICATION_TYPES.has(String(notification.type || '').toUpperCase());
+    }, [getScope]);
+
+    const isRequestNotification = useCallback((notification: Notification) => {
+        const type = String(notification.type || '').toUpperCase();
+        return type === 'PROJECT_CREATED' || type === 'PROJECT_APPROVED' || type === 'PROJECT_REJECTED';
+    }, []);
+
+    const isRiskNotification = useCallback((notification: Notification) => {
+        const type = String(notification.type || '').toUpperCase();
+        return type === 'HIGH_RISK' || type === 'FAIRNESS_ALERT' || type === 'SUBMISSION_FLAGGED';
+    }, []);
+
+    const visibleNotifications = useMemo(() => {
+        if (!isManagerView) return notifications;
+        if (managerTab === 'requests') return notifications.filter(isRequestNotification);
+        if (managerTab === 'risks') return notifications.filter(isRiskNotification);
+        return notifications;
+    }, [isManagerView, isRequestNotification, isRiskNotification, managerTab, notifications]);
+
+    const userId = getUserId();
+    const { socket, isConnected } = useSocket({ userId: userId || undefined, autoConnect: true });
 
     const fetchUnreadCount = useCallback(async () => {
         const userId = getUserId();
         if (!userId) return;
         try {
-            const res = await axios.get(`http://localhost:5000/api/notification/unread-count?userId=${userId}`);
+            const scope = getScope();
+            const url = scope
+                ? `http://localhost:5000/api/notification/unread-count?userId=${userId}&scope=${encodeURIComponent(scope)}`
+                : `http://localhost:5000/api/notification/unread-count?userId=${userId}`;
+            const res = await axios.get(url);
             if (res.data.success) setUnreadCount(res.data.count);
         } catch {}
-    }, [getUserId]);
+    }, [getScope, getUserId]);
 
     const fetchNotifications = useCallback(async () => {
         const userId = getUserId();
         if (!userId) return;
         setLoading(true);
         try {
-            const res = await axios.get(`http://localhost:5000/api/notification/list?userId=${userId}`);
+            const scope = getScope();
+            const url = scope
+                ? `http://localhost:5000/api/notification/list?userId=${userId}&scope=${encodeURIComponent(scope)}`
+                : `http://localhost:5000/api/notification/list?userId=${userId}`;
+            const res = await axios.get(url);
             if (res.data.success) {
                 setNotifications(res.data.notifications);
                 setUnreadCount(res.data.notifications.filter((n: Notification) => !n.isRead).length);
             }
         } catch {} finally { setLoading(false); }
-    }, [getUserId]);
+    }, [getScope, getUserId]);
 
-    // Poll every 30 seconds
+    // Poll every 30 seconds (fallback) and listen for Socket.io events
     useEffect(() => {
         fetchUnreadCount();
+        
+        // Fallback polling every 30 seconds
         const interval = setInterval(fetchUnreadCount, 30000);
+        
+        // Socket.io real-time listener
+        if (socket && isConnected) {
+            const handleNewNotification = (notification: Notification) => {
+                if (!matchesScope(notification)) return;
+                setNotifications(prev => [notification, ...prev.slice(0, 49)]);
+                setUnreadCount(prev => prev + 1);
+            };
+            socket.on('new_notification', handleNewNotification);
+            return () => {
+                clearInterval(interval);
+                socket.off('new_notification', handleNewNotification);
+            };
+        }
+        
         return () => clearInterval(interval);
-    }, [fetchUnreadCount]);
+    }, [fetchUnreadCount, isConnected, matchesScope, socket]);
 
     // Fetch full list when panel opens
     useEffect(() => {
@@ -123,7 +204,8 @@ export default function NotificationCenter() {
         const userId = getUserId();
         if (!userId) return;
         try {
-            await axios.put('http://localhost:5000/api/notification/read-all', { userId });
+            const scope = getScope();
+            await axios.put('http://localhost:5000/api/notification/read-all', { userId, scope });
             setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
             setUnreadCount(0);
         } catch {}
@@ -152,7 +234,7 @@ export default function NotificationCenter() {
             {/* Bell Button */}
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="relative p-2.5 rounded-full hover:bg-white/60 text-slate-500 hover:text-indigo-600 transition-all group"
+                className={`relative p-2.5 rounded-full hover:bg-white/60 text-slate-500 ${isLecturerView ? 'hover:text-emerald-600' : 'hover:text-indigo-600'} transition-all group`}
                 aria-label="Notifications"
             >
                 <Bell className="w-5 h-5 group-hover:scale-110 transition-transform" strokeWidth={2} />
@@ -164,7 +246,7 @@ export default function NotificationCenter() {
                             initial={{ scale: 0 }}
                             animate={{ scale: 1 }}
                             exit={{ scale: 0 }}
-                            className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] bg-indigo-500 text-white text-[10px] font-black rounded-full flex items-center justify-center px-1 shadow-[0_2px_8px_rgba(99,102,241,0.5)]"
+                            className={`absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] text-white text-[10px] font-black rounded-full flex items-center justify-center px-1 ${isLecturerView ? 'bg-emerald-500 shadow-[0_2px_8px_rgba(16,185,129,0.45)]' : 'bg-indigo-500 shadow-[0_2px_8px_rgba(99,102,241,0.5)]'}`}
                         >
                             {unreadCount > 99 ? '99+' : unreadCount}
                         </motion.div>
@@ -173,7 +255,7 @@ export default function NotificationCenter() {
 
                 {/* Pulse ring when new notifications */}
                 {unreadCount > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 w-[18px] h-[18px] rounded-full bg-indigo-400 animate-ping opacity-40 pointer-events-none" />
+                    <span className={`absolute -top-0.5 -right-0.5 w-[18px] h-[18px] rounded-full animate-ping opacity-40 pointer-events-none ${isLecturerView ? 'bg-emerald-400' : 'bg-indigo-400'}`} />
                 )}
             </button>
 
@@ -192,7 +274,7 @@ export default function NotificationCenter() {
                             <div className="flex items-center gap-3">
                                 <h3 className="text-lg font-black text-slate-800 tracking-tight">Notifications</h3>
                                 {unreadCount > 0 && (
-                                    <span className="px-2.5 py-0.5 bg-indigo-50 text-indigo-600 font-black text-xs rounded-full border border-indigo-100">
+                                    <span className={`px-2.5 py-0.5 font-black text-xs rounded-full border ${isLecturerView ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-indigo-50 text-indigo-600 border-indigo-100'}`}>
                                         {unreadCount} new
                                     </span>
                                 )}
@@ -201,7 +283,7 @@ export default function NotificationCenter() {
                                 {unreadCount > 0 && (
                                     <button 
                                         onClick={markAllAsRead}
-                                        className="p-2 rounded-xl hover:bg-indigo-50 text-slate-400 hover:text-indigo-600 transition-all"
+                                        className={`p-2 rounded-xl text-slate-400 transition-all ${isLecturerView ? 'hover:bg-emerald-50 hover:text-emerald-600' : 'hover:bg-indigo-50 hover:text-indigo-600'}`}
                                         title="Mark all as read"
                                     >
                                         <CheckCheck className="w-4 h-4" />
@@ -216,26 +298,57 @@ export default function NotificationCenter() {
                             </div>
                         </div>
 
+                        {isManagerView && (
+                            <div className="px-4 pt-4 pb-2 bg-white/80 border-b border-slate-100">
+                                <div className="grid grid-cols-3 gap-2 rounded-2xl bg-slate-50 p-1">
+                                    {[
+                                        { key: 'all', label: 'All' },
+                                        { key: 'requests', label: 'Requests' },
+                                        { key: 'risks', label: 'Risks' },
+                                    ].map((tab) => {
+                                        const active = managerTab === tab.key;
+                                        return (
+                                            <button
+                                                key={tab.key}
+                                                onClick={() => setManagerTab(tab.key as ManagerTab)}
+                                                className={`rounded-xl px-3 py-2 text-xs font-black uppercase tracking-wider transition-colors ${
+                                                    active
+                                                        ? 'bg-white text-indigo-700 shadow-sm border border-indigo-100'
+                                                        : 'text-slate-500 hover:text-slate-700'
+                                                }`}
+                                            >
+                                                {tab.label}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+
                         {/* Notification List */}
                         <div className="flex-1 overflow-y-auto custom-scrollbar">
-                            {loading && notifications.length === 0 && (
+                            {loading && visibleNotifications.length === 0 && (
                                 <div className="py-16 text-center">
-                                    <div className="w-8 h-8 border-2 border-indigo-200 border-t-indigo-500 rounded-full animate-spin mx-auto" />
+                                    <div className={`w-8 h-8 border-2 rounded-full animate-spin mx-auto ${isLecturerView ? 'border-emerald-200 border-t-emerald-500' : 'border-indigo-200 border-t-indigo-500'}`} />
                                     <p className="text-sm text-slate-400 mt-4 font-medium">Loading...</p>
                                 </div>
                             )}
 
-                            {!loading && notifications.length === 0 && (
+                            {!loading && visibleNotifications.length === 0 && (
                                 <div className="py-16 text-center px-6">
                                     <div className="w-16 h-16 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center mx-auto mb-4 shadow-sm">
                                         <Bell className="w-7 h-7 text-slate-300" />
                                     </div>
                                     <h4 className="font-bold text-slate-700 mb-1">All Clear!</h4>
-                                    <p className="text-sm text-slate-400 font-medium">No notifications yet. We'll notify you when something important happens.</p>
+                                    <p className="text-sm text-slate-400 font-medium">
+                                        {isManagerView
+                                            ? 'No notifications in this category yet.'
+                                            : "No notifications yet. We'll notify you when something important happens."}
+                                    </p>
                                 </div>
                             )}
 
-                            {notifications.map((notif, idx) => {
+                            {visibleNotifications.map((notif, idx) => {
                                 const style = NOTIFICATION_ICONS[notif.type] || DEFAULT_ICON_STYLE;
                                 const Icon = style.icon;
                                 
@@ -247,12 +360,12 @@ export default function NotificationCenter() {
                                         transition={{ delay: idx * 0.03 }}
                                         onClick={() => handleNotificationClick(notif)}
                                         className={`group relative px-5 py-4 flex items-start gap-4 cursor-pointer transition-all hover:bg-slate-50/80 border-b border-slate-50 ${
-                                            !notif.isRead ? 'bg-indigo-50/30' : ''
+                                            !notif.isRead ? (isLecturerView ? 'bg-emerald-50/35' : 'bg-indigo-50/30') : ''
                                         }`}
                                     >
                                         {/* Unread indicator */}
                                         {!notif.isRead && (
-                                            <div className="absolute left-1.5 top-1/2 -translate-y-1/2 w-1.5 h-8 bg-indigo-400 rounded-full shadow-[0_0_8px_rgba(99,102,241,0.4)]" />
+                                            <div className={`absolute left-1.5 top-1/2 -translate-y-1/2 w-1.5 h-8 rounded-full ${isLecturerView ? 'bg-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.35)]' : 'bg-indigo-400 shadow-[0_0_8px_rgba(99,102,241,0.4)]'}`} />
                                         )}
                                         
                                         {/* Icon */}

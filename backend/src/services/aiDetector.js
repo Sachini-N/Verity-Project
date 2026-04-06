@@ -1,4 +1,5 @@
 const axios = require('axios');
+const { recordIntegrationCall } = require('./systemMetrics');
 
 /**
  * @param {unknown} row
@@ -54,6 +55,7 @@ async function detectAIContent(text) {
     const saplingKey = process.env.SAPLING_API_KEY;
     if (saplingKey) {
         try {
+            const startedAt = Date.now();
             const response = await axios.post(
                 'https://api.sapling.ai/api/v1/aidetect',
                 {
@@ -62,6 +64,7 @@ async function detectAIContent(text) {
                 },
                 { timeout: 60000 }
             );
+            recordIntegrationCall('sapling', { success: true, statusCode: response.status, durationMs: Date.now() - startedAt });
             const aiScore = (response.data.score || 0) * 100;
             return {
                 aiScore: Math.round(aiScore * 100) / 100,
@@ -69,6 +72,11 @@ async function detectAIContent(text) {
                 source: 'sapling'
             };
         } catch (error) {
+            recordIntegrationCall('sapling', {
+                success: false,
+                statusCode: Number(error?.response?.status) || 500,
+                error: error?.response?.data?.message || error?.message || 'Sapling request failed'
+            });
             console.error('Sapling AI detection failed:', error.response?.data || error.message);
         }
     }
@@ -77,6 +85,7 @@ async function detectAIContent(text) {
     if (hfToken) {
         try {
             const snippet = body.substring(0, 6000);
+            const startedAt = Date.now();
             const response = await axios.post(
                 'https://api-inference.huggingface.co/models/openai-community/roberta-base-openai-detector',
                 { inputs: snippet },
@@ -85,11 +94,17 @@ async function detectAIContent(text) {
                     timeout: 60000
                 }
             );
+            recordIntegrationCall('sapling', { success: true, statusCode: response.status, durationMs: Date.now() - startedAt });
             const aiScore = parseHFClassifierOutput(response.data);
             if (aiScore != null) {
                 return { aiScore, sentenceScores: [], source: 'huggingface' };
             }
         } catch (error) {
+            recordIntegrationCall('sapling', {
+                success: false,
+                statusCode: Number(error?.response?.status) || 500,
+                error: error?.response?.data?.error || error?.message || 'Hugging Face request failed'
+            });
             console.error('Hugging Face AI detection failed:', error.response?.data || error.message);
         }
     }

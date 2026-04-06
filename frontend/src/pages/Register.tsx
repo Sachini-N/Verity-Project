@@ -135,15 +135,15 @@ const Register = () => {
     };
 
     return (
-        <div className="min-h-screen flex flex-col bg-[#FAFCFF] relative overflow-hidden">
-            <div className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-gradient-to-bl from-emerald-100/50 to-emerald-50/20 rounded-full blur-[100px] -z-10" />
+        <div className="min-h-screen flex flex-col bg-[#F8FAFC] relative overflow-hidden">
+            <div className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-gradient-to-bl from-indigo-100/40 to-indigo-50/20 rounded-full blur-[100px] -z-10" />
 
             <div className="flex-1 flex items-center justify-center py-12 px-6 relative z-10">
                 <Link to="/" className="absolute top-8 left-8 flex items-center space-x-2 group">
-                    <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-600 to-teal-600 shadow-sm transition-transform group-hover:scale-105">
+                    <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-600 to-teal-600 shadow-sm transition-transform group-hover:scale-105">
                         <BookOpenText className="w-4 h-4 text-white" />
                     </div>
-                    <span className="text-xl font-bold tracking-tight text-slate-800">VERITY</span>
+                    <span className="text-xl font-bold tracking-tight text-slate-900">VERITY</span>
                 </Link>
 
                 <motion.div
@@ -161,14 +161,14 @@ const Register = () => {
                         <button
                             type="button"
                             onClick={() => { setRole('STUDENT'); reset(); clearErrors(); }}
-                            className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${role === 'STUDENT' ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                            className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${role === 'STUDENT' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                         >
                             Student
                         </button>
                         <button
                             type="button"
                             onClick={() => { setRole('LECTURER'); reset(); clearErrors(); }}
-                            className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${role === 'LECTURER' ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                            className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${role === 'LECTURER' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                         >
                             Lecturer
                         </button>
@@ -183,27 +183,27 @@ const Register = () => {
                     <form onSubmit={handleSubmit(onSubmitUser)} className="space-y-5">
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-bold text-slate-700 mb-1.5">Full Name</label>
+                                <label className="block text-sm font-bold text-slate-800 mb-1.5">Full Name</label>
                                 <input 
                                     type="text" 
                                     {...register('name', { 
                                         required: 'Full name is required',
                                         pattern: { value: /^[a-zA-Z\s]*$/, message: 'Only letters and spaces allowed' }
                                     })} 
-                                    className={`w-full px-4 py-3 bg-white/80 border rounded-xl text-slate-900 focus:outline-none focus:ring-2 font-medium ${errors.name ? 'border-red-400 focus:ring-red-500/50' : 'border-slate-200 focus:ring-emerald-500/50'}`}
+                                    className={`w-full px-4 py-3 bg-white border rounded-xl text-slate-900 focus:outline-none focus:ring-2 font-medium ${errors.name ? 'border-red-400 focus:ring-red-500/50' : 'border-slate-200 focus:ring-indigo-500/50'}`}
                                     placeholder="John Doe" 
                                 />
                                 {errors.name && <p className="text-red-500 text-xs mt-1 font-bold">{errors.name.message as string}</p>}
                             </div>
                             <div>
-                                <label className="block text-sm font-bold text-slate-700 mb-1.5">Email address</label>
+                                <label className="block text-sm font-bold text-slate-800 mb-1.5">Email address</label>
                                 <input 
                                     type="email" 
                                     {...register('email', { 
                                         required: 'Email is required',
                                         pattern: { value: /^\S+@\S+$/i, message: 'Invalid email address' }
                                     })} 
-                                    className={`w-full px-4 py-3 bg-white/80 border rounded-xl text-slate-900 focus:outline-none focus:ring-2 font-medium ${errors.email ? 'border-red-400 focus:ring-red-500/50' : 'border-slate-200 focus:ring-emerald-500/50'}`}
+                                    className={`w-full px-4 py-3 bg-white border rounded-xl text-slate-900 focus:outline-none focus:ring-2 font-medium ${errors.email ? 'border-red-400 focus:ring-red-500/50' : 'border-slate-200 focus:ring-indigo-500/50'}`}
                                     placeholder="john@uni.edu" 
                                 />
                                 {errors.email && <p className="text-red-500 text-xs mt-1 font-bold">{errors.email.message as string}</p>}
@@ -213,14 +213,14 @@ const Register = () => {
                         {role === 'STUDENT' ? (
                             <>
                                 <div>
-                                    <label className="block text-sm font-bold text-slate-700 mb-1.5">Student Index / IT Number</label>
+                                    <label className="block text-sm font-bold text-slate-800 mb-1.5">Student Index / IT Number</label>
                                     <input 
                                         type="text" 
                                         {...register('indexNumber', { 
                                             required: 'IT Number is required',
                                             pattern: { value: /^IT\d{8}$/i, message: 'Must start with IT followed by 8 digits' }
                                         })} 
-                                        className={`w-full px-4 py-3 bg-white/80 border rounded-xl text-slate-900 focus:outline-none focus:ring-2 font-medium uppercase ${errors.indexNumber ? 'border-red-400 focus:ring-red-500/50' : 'border-slate-200 focus:ring-emerald-500/50'}`}
+                                        className={`w-full px-4 py-3 bg-white border rounded-xl text-slate-900 focus:outline-none focus:ring-2 font-medium uppercase ${errors.indexNumber ? 'border-red-400 focus:ring-red-500/50' : 'border-slate-200 focus:ring-indigo-500/50'}`}
                                         placeholder="IT21000000" 
                                     />
                                     {errors.indexNumber && <p className="text-red-500 text-xs mt-1 font-bold">{errors.indexNumber.message as string}</p>}
@@ -228,21 +228,21 @@ const Register = () => {
 
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-sm font-bold text-slate-700 mb-1.5">Academic Year</label>
+                                        <label className="block text-sm font-bold text-slate-800 mb-1.5">Academic Year</label>
                                         <select 
                                             {...register('yearId', { required: 'Year is required' })} 
-                                            className={`w-full px-4 py-3 bg-white/80 border rounded-xl text-slate-900 focus:outline-none focus:ring-2 font-medium ${errors.yearId ? 'border-red-400 focus:ring-red-500/50' : 'border-slate-200 focus:ring-emerald-500/50'}`}
+                                            className={`w-full px-4 py-3 bg-white border rounded-xl text-slate-900 focus:outline-none focus:ring-2 font-medium ${errors.yearId ? 'border-red-400 focus:ring-red-500/50' : 'border-slate-200 focus:ring-indigo-500/50'}`}
                                         >
                                             <option value="">Select Year...</option>
                                             {years.map(y => <option key={y.id} value={y.id}>{y.name}</option>)}
                                         </select>
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-bold text-slate-700 mb-1.5">Semester</label>
+                                        <label className="block text-sm font-bold text-slate-800 mb-1.5">Semester</label>
                                         <select 
                                             {...register('semesterId', { required: 'Semester is required' })} 
                                             disabled={!selectedYearId} 
-                                            className={`w-full px-4 py-3 bg-white/80 border rounded-xl text-slate-900 focus:outline-none focus:ring-2 font-medium disabled:opacity-50 ${errors.semesterId ? 'border-red-400 focus:ring-red-500/50' : 'border-slate-200 focus:ring-emerald-500/50'}`}
+                                            className={`w-full px-4 py-3 bg-white border rounded-xl text-slate-900 focus:outline-none focus:ring-2 font-medium disabled:opacity-50 ${errors.semesterId ? 'border-red-400 focus:ring-red-500/50' : 'border-slate-200 focus:ring-indigo-500/50'}`}
                                         >
                                             <option value="">Select Semester...</option>
                                             {semesters.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
@@ -252,17 +252,17 @@ const Register = () => {
                             </>
                         ) : (
                             <div>
-                                <label className="block text-sm font-bold text-slate-700 mb-1.5">Assigned Modules</label>
-                                <div className="space-y-2 max-h-48 overflow-y-auto pr-2 border border-slate-200 rounded-xl p-3 bg-white/80">
+                                <label className="block text-sm font-bold text-slate-800 mb-1.5">Assigned Modules</label>
+                                <div className="space-y-2 max-h-48 overflow-y-auto pr-2 border border-slate-200 rounded-xl p-3 bg-white">
                                     {modules.map(mod => (
                                         <label key={mod.id} className="flex items-center space-x-3 p-2 hover:bg-slate-50 rounded-lg cursor-pointer">
                                             <input
                                                 type="checkbox"
-                                                className="w-4 h-4 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500 font-medium"
+                                                className="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500 font-medium"
                                                 checked={selectedModuleIds.includes(mod.id)}
                                                 onChange={() => toggleModuleSelection(mod.id)}
                                             />
-                                            <span className="text-sm font-medium text-slate-700">{mod.code} - {mod.name}</span>
+                                            <span className="text-sm font-medium text-slate-800">{mod.code} - {mod.name}</span>
                                         </label>
                                     ))}
                                 </div>
@@ -270,14 +270,14 @@ const Register = () => {
                         )}
                         
                         <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-1.5">Password</label>
+                            <label className="block text-sm font-bold text-slate-800 mb-1.5">Password</label>
                             <input 
                                 type="password" 
                                 {...register('password', { 
                                     required: 'Password is required',
                                     minLength: { value: 8, message: 'At least 8 characters' }
                                 })} 
-                                className={`w-full px-4 py-3 bg-white/80 border rounded-xl text-slate-900 focus:outline-none focus:ring-2 font-medium transition-all ${errors.password ? 'border-red-400 focus:ring-red-500/50' : 'border-slate-200 focus:ring-emerald-500/50'}`}
+                                className={`w-full px-4 py-3 bg-white border rounded-xl text-slate-900 focus:outline-none focus:ring-2 font-medium transition-all ${errors.password ? 'border-red-400 focus:ring-red-500/50' : 'border-slate-200 focus:ring-indigo-500/50'}`}
                                 placeholder="••••••••" 
                             />
                             {errors.password && <p className="text-red-500 text-xs mt-1 font-bold">{errors.password.message as string}</p>}
@@ -286,14 +286,14 @@ const Register = () => {
                         <button 
                             type="submit" 
                             disabled={loading} 
-                            className="w-full flex items-center justify-center py-3.5 px-4 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl transition-all shadow-md mt-4"
+                            className="w-full flex items-center justify-center py-3.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-all shadow-md mt-4"
                         >
                             {loading ? <span>Creating account...</span> : <span className="flex items-center space-x-2"><span>Complete Registration</span><ArrowRight className="w-4 h-4" /></span>}
                         </button>
                     </form>
 
-                    <div className="mt-8 text-center text-sm font-medium text-slate-500">
-                        Already have an account? <Link to="/login" className="font-bold text-emerald-600 hover:text-emerald-700">Sign in</Link>
+                    <div className="mt-8 text-center text-sm font-medium text-slate-600">
+                        Already have an account? <Link to="/login" className="font-bold text-indigo-600 hover:text-indigo-700">Sign in</Link>
                     </div>
                 </motion.div>
             </div>

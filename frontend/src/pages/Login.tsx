@@ -58,17 +58,17 @@ const Login = () => {
     };
 
     return (
-        <div className="min-h-screen flex flex-col bg-[#FAFCFF] relative overflow-hidden">
+        <div className="min-h-screen flex flex-col bg-[#F8FAFC] relative overflow-hidden">
             {/* Background Ambient Elements */}
-            <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-gradient-to-br from-emerald-100/50 to-emerald-50/20 rounded-full blur-[100px] -z-10" />
-            <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] bg-gradient-to-tl from-emerald-50/30 to-teal-50/20 rounded-full blur-[120px] -z-10" />
+            <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-gradient-to-br from-indigo-100/40 to-indigo-50/20 rounded-full blur-[100px] -z-10" />
+            <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] bg-gradient-to-tl from-teal-50/30 to-indigo-50/20 rounded-full blur-[120px] -z-10" />
 
             <div className="flex-1 flex items-center justify-center py-12 px-6 relative z-10">
                 <Link to="/" className="absolute top-8 left-8 flex items-center space-x-2 group">
-                    <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-600 to-teal-600 shadow-sm transition-transform group-hover:scale-105">
+                    <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-600 to-teal-600 shadow-sm transition-transform group-hover:scale-105">
                         <BookOpenText className="w-4 h-4 text-white" />
                     </div>
-                    <span className="text-xl font-bold tracking-tight text-slate-800">VERITY</span>
+                    <span className="text-xl font-bold tracking-tight text-slate-900">VERITY</span>
                 </Link>
 
                 <motion.div
@@ -90,14 +90,14 @@ const Login = () => {
 
                     <form onSubmit={handleSubmit(onSubmitUser)} className="space-y-5">
                         <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-1.5">Email address</label>
+                            <label className="block text-sm font-bold text-slate-800 mb-1.5">Email address</label>
                             <input
                                 type="email"
                                 {...register('email', { 
                                     required: 'Email is required',
                                     pattern: { value: /^\S+@\S+$/i, message: 'Invalid email format' }
                                 })}
-                                className={`w-full px-4 py-3 bg-white/80 border rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all font-medium ${errors.email ? 'border-red-400 focus:border-red-400' : 'border-slate-200 focus:border-emerald-500'}`}
+                                className={`w-full px-4 py-3 bg-white border rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-medium ${errors.email ? 'border-red-400 focus:border-red-400' : 'border-slate-200 focus:border-indigo-400'}`}
                                 placeholder="student@demo.edu"
                             />
                             {errors.email && <p className="text-red-500 text-xs mt-1 font-bold">{errors.email.message as string}</p>}
@@ -105,13 +105,13 @@ const Login = () => {
 
                         <div>
                             <div className="flex justify-between items-center mb-1.5">
-                                <label className="block text-sm font-bold text-slate-700">Password</label>
-                                <a href="#" className="text-xs font-semibold text-emerald-600 hover:text-emerald-700">Forgot password?</a>
+                                <label className="block text-sm font-bold text-slate-800">Password</label>
+                                <a href="#" className="text-xs font-semibold text-indigo-600 hover:text-indigo-700">Forgot password?</a>
                             </div>
                             <input
                                 type="password"
                                 {...register('password', { required: 'Password is required' })}
-                                className={`w-full px-4 py-3 bg-white/80 border rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all font-medium ${errors.password ? 'border-red-400 focus:border-red-400' : 'border-slate-200 focus:border-emerald-500'}`}
+                                className={`w-full px-4 py-3 bg-white border rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-medium ${errors.password ? 'border-red-400 focus:border-red-400' : 'border-slate-200 focus:border-indigo-400'}`}
                                 placeholder="••••••••"
                             />
                             {errors.password && <p className="text-red-500 text-xs mt-1 font-bold">{errors.password.message as string}</p>}
@@ -120,7 +120,7 @@ const Login = () => {
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full flex items-center justify-center py-3.5 px-4 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl transition-all shadow-md hover:shadow-lg disabled:opacity-50 mt-4 group"
+                            className="w-full flex items-center justify-center py-3.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-all shadow-md hover:shadow-lg disabled:opacity-50 mt-4 group"
                         >
                             {loading ? (
                                 <span className="flex items-center space-x-2">
@@ -137,9 +137,9 @@ const Login = () => {
                     </form>
 
                     <div className="mt-8 text-center">
-                        <p className="text-sm font-medium text-slate-500">
+                        <p className="text-sm font-medium text-slate-600">
                             Don't have an account?{' '}
-                            <Link to="/register" className="font-bold text-emerald-600 hover:text-emerald-700">
+                            <Link to="/register" className="font-bold text-indigo-600 hover:text-indigo-700">
                                 Create an account
                             </Link>
                         </p>

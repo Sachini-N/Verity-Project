@@ -1,5 +1,6 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
+const { getIO } = require('../config/socket');
 
 /**
  * Create a notification for a single user.
@@ -17,6 +18,15 @@ async function createNotification({ userId, type, title, message, link, metadata
                 metadata: metadata || null
             }
         });
+        
+        try {
+            const io = getIO();
+            io.to(`user_${userId}`).emit('new_notification', notification);
+        } catch (e) {
+            console.error('Socket emit failed:', e.message);
+        }
+
+        return notification;
     } catch (error) {
         console.error('Notification creation error:', error.message);
         return null;

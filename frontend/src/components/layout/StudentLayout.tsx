@@ -4,7 +4,7 @@ import Footer from '../Footer';
 
 export default function StudentLayout() {
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col relative overflow-hidden font-sans text-slate-800 selection:bg-indigo-100">
+    <div className="theme-student min-h-screen bg-slate-50 flex flex-col relative overflow-hidden font-sans text-slate-800 selection:bg-indigo-100">
       
       {/* Soft Dot-Grid Background Pattern */}
       <div className="absolute inset-0 z-0 opacity-20 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#CBD5E1 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
@@ -15,8 +15,8 @@ export default function StudentLayout() {
 
       <div className="relative z-10 flex flex-col flex-1">
         <StudentNav />
-        {/* Added top padding to clear the fixed floating nav */}
-        <main className="flex-1 w-full max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-28">
+        {/* Global default page spacing so all portal pages align consistently */}
+        <main className="flex-1 w-full max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-10 pt-28 pb-14">
           <Outlet />
         </main>
         <Footer theme="student" />

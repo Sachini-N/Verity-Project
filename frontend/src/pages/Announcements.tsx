@@ -42,13 +42,13 @@ const TAG_DOT: Record<TagType, string> = {
 };
 
 const AVATAR_COLORS: Record<string, string> = {
-  Lecturer: 'bg-indigo-100 text-indigo-700 border-indigo-200',
+  Lecturer: 'bg-emerald-100 text-emerald-700 border-emerald-200',
   Manager:  'bg-rose-100 text-rose-700 border-rose-200',
   Student:  'bg-emerald-100 text-emerald-700 border-emerald-200',
 };
 
 const ROLE_BADGE: Record<string, string> = {
-  Lecturer: 'bg-indigo-50 text-indigo-600 border-indigo-200',
+  Lecturer: 'bg-emerald-50 text-emerald-600 border-emerald-200',
   Manager:  'bg-rose-50 text-rose-600 border-rose-200',
   Student:  'bg-emerald-50 text-emerald-600 border-emerald-200',
 };
@@ -72,6 +72,7 @@ function getUserFromStorage() {
 
 function ComposerCard({ onClose, onPostSuccess, onError }: { onClose: () => void, onPostSuccess: (announcement: Announcement) => void, onError: (msg: string) => void }) {
   const role = getCurrentRole();
+  const isLecturer = role === 'lecturer';
   const [isSystemWide, setIsSystemWide] = useState(false);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
@@ -142,11 +143,11 @@ function ComposerCard({ onClose, onPostSuccess, onError }: { onClose: () => void
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: -10, scale: 0.97 }}
       transition={{ type: 'spring', stiffness: 350, damping: 30 }}
-      className="bg-white/90 backdrop-blur-xl rounded-3xl border border-slate-200 shadow-xl p-6 mb-6"
+      className={`bg-white rounded-[1.75rem] border shadow-xl p-6 mb-6 ${isLecturer ? 'border-emerald-100' : 'border-indigo-100'}`}
     >
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-indigo-700 flex items-center justify-center text-white font-black text-sm shadow-md">
+          <div className={`w-10 h-10 rounded-full bg-gradient-to-br flex items-center justify-center text-white font-black text-sm shadow-md ${isLecturer ? 'from-emerald-500 to-teal-600' : 'from-indigo-500 to-indigo-700'}`}>
             {getUserFromStorage()?.name?.charAt(0) || 'Y'}
           </div>
           <div>
@@ -164,7 +165,7 @@ function ComposerCard({ onClose, onPostSuccess, onError }: { onClose: () => void
         placeholder="Announcement title..."
         value={title}
         onChange={(e) => setTitle(e.target.value)}
-        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none font-semibold text-slate-800 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400 transition-all mb-3 text-sm"
+        className={`w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none font-semibold text-slate-800 transition-all mb-3 text-sm ${isLecturer ? 'focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-400' : 'focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400'}`}
       />
       
       <div className="mb-3 rounded-xl overflow-hidden border border-slate-200 bg-slate-50">
@@ -191,7 +192,7 @@ function ComposerCard({ onClose, onPostSuccess, onError }: { onClose: () => void
           <select 
             value={tag}
             onChange={(e) => setTag(e.target.value as TagType)}
-            className="text-xs font-bold text-slate-600 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 outline-none focus:border-indigo-400 cursor-pointer"
+            className={`text-xs font-bold text-slate-600 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 outline-none cursor-pointer ${isLecturer ? 'focus:border-emerald-400' : 'focus:border-indigo-400'}`}
           >
             <option value="Urgent">🔴 Urgent</option>
             <option value="Academic">🔵 Academic</option>
@@ -202,7 +203,7 @@ function ComposerCard({ onClose, onPostSuccess, onError }: { onClose: () => void
             value={module}
             onChange={(e) => setModule(e.target.value)}
             disabled={isSystemWide}
-            className={`text-xs font-bold bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 outline-none focus:border-indigo-400 cursor-pointer ${isSystemWide ? 'opacity-50 text-slate-400' : 'text-slate-600'}`}
+            className={`text-xs font-bold bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 outline-none cursor-pointer ${isLecturer ? 'focus:border-emerald-400' : 'focus:border-indigo-400'} ${isSystemWide ? 'opacity-50 text-slate-400' : 'text-slate-600'}`}
           >
             <option value="All Modules">All Modules</option>
             <option value="SE3050">SE3050</option>
@@ -229,7 +230,7 @@ function ComposerCard({ onClose, onPostSuccess, onError }: { onClose: () => void
         <button 
           onClick={handlePost} 
           disabled={!title.trim() || !content.trim() || content === '<p><br></p>' || isSubmitting}
-          className="flex items-center gap-2 px-5 py-2.5 bg-slate-900 text-white text-sm font-bold rounded-xl hover:bg-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-lg shadow-slate-900/10 shrink-0"
+          className={`flex items-center gap-2 px-5 py-2.5 bg-slate-900 text-white text-sm font-bold rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-lg shadow-slate-900/10 shrink-0 ${isLecturer ? 'hover:bg-emerald-600' : 'hover:bg-indigo-600'}`}
         >
           {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
           {isSubmitting ? 'Posting...' : 'Post'}
@@ -242,6 +243,7 @@ function ComposerCard({ onClose, onPostSuccess, onError }: { onClose: () => void
 
 function EditComposerCard({ onClose, onEditSuccess, onError, initialData }: { onClose: () => void, onEditSuccess: (announcement: Announcement) => void, onError: (msg: string) => void, initialData: Announcement }) {
   const role = getCurrentRole();
+  const isLecturer = role === 'lecturer';
   const [isSystemWide, setIsSystemWide] = useState(initialData.module === 'System');
   const [title, setTitle] = useState(initialData.title);
   const [content, setContent] = useState(initialData.description);
@@ -304,11 +306,11 @@ function EditComposerCard({ onClose, onEditSuccess, onError, initialData }: { on
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: -10, scale: 0.97 }}
       transition={{ type: 'spring', stiffness: 350, damping: 30 }}
-      className="bg-white/90 backdrop-blur-xl rounded-3xl border border-slate-200 shadow-xl p-6 mb-6"
+      className={`bg-white rounded-[1.75rem] border shadow-xl p-6 mb-6 ${isLecturer ? 'border-emerald-100' : 'border-indigo-100'}`}
     >
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-indigo-700 flex items-center justify-center text-white font-black text-sm shadow-md">
+          <div className={`w-10 h-10 rounded-full bg-gradient-to-br flex items-center justify-center text-white font-black text-sm shadow-md ${isLecturer ? 'from-emerald-500 to-teal-600' : 'from-indigo-500 to-indigo-700'}`}>
             {getUserFromStorage()?.name?.charAt(0) || 'Y'}
           </div>
           <div>
@@ -326,7 +328,7 @@ function EditComposerCard({ onClose, onEditSuccess, onError, initialData }: { on
         placeholder="Announcement title..."
         value={title}
         onChange={(e) => setTitle(e.target.value)}
-        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none font-semibold text-slate-800 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400 transition-all mb-3 text-sm"
+        className={`w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none font-semibold text-slate-800 transition-all mb-3 text-sm ${isLecturer ? 'focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-400' : 'focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400'}`}
       />
 
       <div className="mb-3 rounded-xl overflow-hidden border border-slate-200 bg-slate-50">
@@ -349,12 +351,12 @@ function EditComposerCard({ onClose, onEditSuccess, onError, initialData }: { on
 
       <div className="flex items-center justify-between pt-4 border-t border-slate-100">
         <div className="flex flex-wrap items-center gap-3">
-          <select value={tag} onChange={(e) => setTag(e.target.value as TagType)} className="text-xs font-bold text-slate-600 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 outline-none focus:border-indigo-400 cursor-pointer">
+          <select value={tag} onChange={(e) => setTag(e.target.value as TagType)} className={`text-xs font-bold text-slate-600 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 outline-none cursor-pointer ${isLecturer ? 'focus:border-emerald-400' : 'focus:border-indigo-400'}`}>
             <option value="Urgent">🔴 Urgent</option>
             <option value="Academic">🔵 Academic</option>
             <option value="General">🟢 General</option>
           </select>
-          <select value={module} onChange={(e) => setModule(e.target.value)} disabled={isSystemWide} className={`text-xs font-bold bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 outline-none focus:border-indigo-400 cursor-pointer ${isSystemWide ? 'opacity-50 text-slate-400' : 'text-slate-600'}`}>
+          <select value={module} onChange={(e) => setModule(e.target.value)} disabled={isSystemWide} className={`text-xs font-bold bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 outline-none cursor-pointer ${isLecturer ? 'focus:border-emerald-400' : 'focus:border-indigo-400'} ${isSystemWide ? 'opacity-50 text-slate-400' : 'text-slate-600'}`}>
              <option value="All Modules">All Modules</option>
             <option value="SE3050">SE3050</option>
             <option value="SE3060">SE3060</option>
@@ -371,7 +373,7 @@ function EditComposerCard({ onClose, onEditSuccess, onError, initialData }: { on
             </button>
           )}
         </div>
-        <button onClick={handleEdit} disabled={!title.trim() || !content.trim() || isSubmitting} className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-lg shadow-indigo-600/20 shrink-0">
+        <button onClick={handleEdit} disabled={!title.trim() || !content.trim() || isSubmitting} className={`flex items-center gap-2 px-5 py-2.5 text-white text-sm font-bold rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-lg shrink-0 ${isLecturer ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/20' : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-600/20'}`}>
           {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
           {isSubmitting ? 'Saving...' : 'Save'}
         </button>
@@ -383,6 +385,7 @@ function EditComposerCard({ onClose, onEditSuccess, onError, initialData }: { on
 function AnnouncementCard({
   announcement: a, index, role, currentUser, onEdit, onDelete
 }: { announcement: Announcement; index: number; role: UserRole; currentUser: any; onEdit: (a: Announcement) => void; onDelete: (id: string | number) => void; }) {
+  const isLecturer = role === 'lecturer';
   const canEdit = currentUser.id === a.authorId;
   const canDelete = currentUser?.role?.toUpperCase() === 'MANAGER' || currentUser.id === a.authorId;
 
@@ -400,17 +403,19 @@ function AnnouncementCard({
       initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.05, type: 'spring', stiffness: 260, damping: 24 }}
-      className="bg-white/80 backdrop-blur-md rounded-3xl border border-slate-100 shadow-sm hover:shadow-xl hover:border-slate-200 transition-all group relative"
+      className={`rounded-[1.5rem] border border-slate-200 bg-white shadow-sm hover:shadow-xl transition-all group relative overflow-hidden ${isLecturer ? 'hover:border-emerald-200' : 'hover:border-indigo-200'}`}
     >
+      <div className={`absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b ${isLecturer ? 'from-emerald-500 via-emerald-400 to-teal-400' : 'from-indigo-500 via-indigo-400 to-teal-400'}`} />
+
       {/* Pinned indicator */}
       {a.pinned && (
-        <div className="absolute -top-2.5 left-6 bg-amber-400 text-amber-900 text-[10px] font-black uppercase tracking-widest px-3 py-0.5 rounded-full shadow-sm flex items-center gap-1">
+        <div className="absolute -top-2.5 left-8 bg-amber-400 text-amber-900 text-[10px] font-black uppercase tracking-widest px-3 py-0.5 rounded-full shadow-sm flex items-center gap-1 z-10">
           <Pin className="w-3 h-3" />
           Pinned
         </div>
       )}
 
-      <div className="p-6 pb-5">
+      <div className="p-6 pb-5 pl-7">
         {/* ── Card Header ── */}
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-3">
@@ -429,9 +434,9 @@ function AnnouncementCard({
           </div>
 
           {/* Manager / Author actions */}
-          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="flex items-center gap-1 opacity-70 group-hover:opacity-100 transition-opacity">
             {canEdit && (
-              <button onClick={() => onEdit(a)} className="p-2 rounded-xl hover:bg-indigo-50 text-slate-400 hover:text-indigo-600 transition-colors" title="Edit">
+              <button onClick={() => onEdit(a)} className={`p-2 rounded-xl text-slate-400 transition-colors ${isLecturer ? 'hover:bg-emerald-50 hover:text-emerald-600' : 'hover:bg-indigo-50 hover:text-indigo-600'}`} title="Edit">
                 <Pencil className="w-4 h-4" />
               </button>
             )}
@@ -444,7 +449,7 @@ function AnnouncementCard({
         </div>
 
         {/* ── Card Body ── */}
-        <h3 className="text-xl font-black text-slate-900 mb-3 leading-snug group-hover:text-indigo-700 transition-colors">
+        <h3 className={`text-xl font-black text-slate-900 mb-3 leading-snug transition-colors ${isLecturer ? 'group-hover:text-emerald-700' : 'group-hover:text-indigo-700'}`}>
           {a.title}
         </h3>
         
@@ -483,7 +488,7 @@ function AnnouncementCard({
           </div>
 
           {(role === 'lecturer' || role === 'manager') && a.readPercentage !== undefined && (
-            <div className="flex items-center gap-1.5 text-[12px] font-bold text-indigo-600 bg-indigo-50 border border-indigo-100 px-3 py-1 rounded-full cursor-help" title={`${a.readPercentage}% of all students have read this`}>
+            <div className={`flex items-center gap-1.5 text-[12px] font-bold px-3 py-1 rounded-full cursor-help ${isLecturer ? 'text-emerald-600 bg-emerald-50 border border-emerald-100' : 'text-indigo-600 bg-indigo-50 border border-indigo-100'}`} title={`${a.readPercentage}% of all students have read this`}>
               <Eye className="w-3.5 h-3.5" />
               Read: {a.readPercentage}%
             </div>
@@ -499,6 +504,7 @@ function AnnouncementCard({
    ═══════════════════════════════════════════════════════ */
 export default function Announcements() {
   const role = getCurrentRole();
+  const isLecturer = role === 'lecturer';
   const [showComposer, setShowComposer] = useState(false);
   const [editingAnnouncement, setEditingAnnouncement] = useState<Announcement | null>(null);
   const [filterModule, setFilterModule] = useState('All');
@@ -622,30 +628,54 @@ export default function Announcements() {
     return list;
   }, [filterModule, searchQuery, announcementsList]);
 
+  const boardStats = useMemo(() => {
+    const pinned = filtered.filter((a) => a.pinned).length;
+    const urgent = filtered.filter((a) => a.tag === 'Urgent').length;
+    const modulesCount = new Set(filtered.map((a) => a.module)).size;
+    return { pinned, urgent, modulesCount };
+  }, [filtered]);
+
   return (
-    <div className="max-w-3xl mx-auto">
-      {/* ── Page Header ── */}
+    <div className="max-w-6xl mx-auto">
       <motion.div
         initial={{ opacity: 0, y: -12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="mb-8"
+        className="mb-8 space-y-4"
       >
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
-                <Megaphone className="w-5 h-5 text-white" />
-              </div>
-              Announcements
-            </h1>
-            <p className="text-slate-500 font-medium text-sm mt-2 ml-[52px]">
-              Stay informed with the latest updates from your lecturers and administration.
-            </p>
-          </div>
+        <div className={`relative overflow-hidden rounded-[2rem] border p-7 shadow-sm ${isLecturer ? 'border-emerald-100 bg-gradient-to-r from-emerald-50/80 via-white to-teal-50/40' : 'border-indigo-100 bg-gradient-to-r from-indigo-50/80 via-white to-teal-50/40'}`}>
+          <div className={`absolute -top-20 -right-16 h-56 w-56 rounded-full blur-3xl ${isLecturer ? 'bg-emerald-200/30' : 'bg-indigo-200/30'}`} />
+          <div className="absolute -bottom-16 left-1/4 h-48 w-48 rounded-full bg-teal-200/25 blur-3xl" />
 
-          <div className="flex flex-col sm:flex-row items-center gap-3 sm:ml-auto w-full sm:w-auto mt-4 sm:mt-0">
-            <div className="relative w-full sm:w-64">
+          <div className="relative z-10 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
+            <div>
+              <div className={`inline-flex items-center gap-2 rounded-full border bg-white px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] mb-2 ${isLecturer ? 'border-emerald-100 text-emerald-600' : 'border-indigo-100 text-indigo-600'}`}>
+                <Megaphone className="w-3.5 h-3.5" /> Bulletin Stream
+              </div>
+              <h1 className="text-4xl font-black text-slate-900 tracking-tight">Announcements</h1>
+              <p className="text-sm text-slate-500 font-medium mt-2">A live campus feed for module updates, urgent notices, and institutional alerts.</p>
+            </div>
+
+            <div className="grid grid-cols-3 gap-3 min-w-[320px]">
+              <div className={`rounded-xl border bg-white/90 p-3 text-center ${isLecturer ? 'border-emerald-100' : 'border-indigo-100'}`}>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Feed</p>
+                <p className={`text-xl font-black ${isLecturer ? 'text-emerald-700' : 'text-indigo-700'}`}>{filtered.length}</p>
+              </div>
+              <div className="rounded-xl border border-rose-100 bg-white/90 p-3 text-center">
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Urgent</p>
+                <p className="text-xl font-black text-rose-700">{boardStats.urgent}</p>
+              </div>
+              <div className="rounded-xl border border-amber-100 bg-white/90 p-3 text-center">
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Pinned</p>
+                <p className="text-xl font-black text-amber-700">{boardStats.pinned}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="flex flex-col sm:flex-row items-center gap-3">
+            <div className="relative w-full sm:flex-1">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Search className="h-4 w-4 text-slate-400" />
               </div>
@@ -654,7 +684,7 @@ export default function Announcements() {
                 placeholder="Search announcements..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-700 outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400 transition-all shadow-sm"
+                className={`w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 outline-none transition-all ${isLecturer ? 'focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-400' : 'focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400'}`}
               />
             </div>
 
@@ -663,7 +693,7 @@ export default function Announcements() {
               <select
                 value={filterModule}
                 onChange={e => setFilterModule(e.target.value)}
-                className="w-full sm:w-auto text-sm font-bold text-slate-700 bg-white border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400 cursor-pointer shadow-sm"
+                className={`w-full sm:w-auto text-sm font-bold text-slate-700 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 outline-none cursor-pointer ${isLecturer ? 'focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-400' : 'focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400'}`}
               >
                 {modules.map(m => (
                   <option key={m} value={m}>{m === 'All' ? 'All Modules' : m}</option>
@@ -694,14 +724,14 @@ export default function Announcements() {
       </AnimatePresence>
 
       {/* ── Feed ── */}
-      <div className="space-y-5">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         {isLoading ? (
-          <div className="text-center py-20 border-2 border-dashed border-slate-200 rounded-3xl">
-            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600 mx-auto mb-3"></div>
+          <div className="md:col-span-2 text-center py-20 border-2 border-dashed border-slate-200 rounded-3xl">
+            <div className={`animate-spin rounded-full h-10 w-10 border-b-2 mx-auto mb-3 ${isLecturer ? 'border-emerald-600' : 'border-indigo-600'}`}></div>
             <h3 className="text-lg font-bold text-slate-400">Loading announcements...</h3>
           </div>
         ) : filtered.length === 0 ? (
-          <div className="text-center py-20 border-2 border-dashed border-slate-200 rounded-3xl">
+          <div className="md:col-span-2 text-center py-20 border-2 border-dashed border-slate-200 rounded-3xl">
             <Megaphone className="w-10 h-10 text-slate-300 mx-auto mb-3" />
             <h3 className="text-lg font-bold text-slate-400">No announcements found.</h3>
             <p className="text-sm text-slate-400 mt-1">Try changing the module filter.</p>
@@ -722,13 +752,13 @@ export default function Announcements() {
             
             {/* Observer Hook Loading Signal */}
             {hasMore && (
-              <div ref={observerTarget} className="py-6 flex justify-center">
-                <Loader2 className="w-8 h-8 text-indigo-500 animate-spin opacity-50" />
+              <div ref={observerTarget} className="md:col-span-2 py-6 flex justify-center">
+                <Loader2 className={`w-8 h-8 animate-spin opacity-50 ${isLecturer ? 'text-emerald-500' : 'text-indigo-500'}`} />
               </div>
             )}
             
             {!hasMore && filtered.length > 0 && (
-              <p className="text-center text-slate-400 text-xs font-bold py-6">You've reached the end of the announcements.</p>
+              <p className="md:col-span-2 text-center text-slate-400 text-xs font-bold py-6">You've reached the end of the announcements.</p>
             )}
           </>
         )}
@@ -741,7 +771,7 @@ export default function Announcements() {
           animate={{ scale: 1 }}
           transition={{ type: 'spring', stiffness: 400, damping: 20, delay: 0.3 }}
           onClick={() => setShowComposer(true)}
-          className="fixed bottom-8 right-8 w-14 h-14 bg-gradient-to-br from-indigo-600 to-purple-700 text-white rounded-2xl shadow-2xl shadow-indigo-500/30 flex items-center justify-center hover:scale-110 hover:shadow-indigo-500/40 transition-all z-40"
+          className={`fixed bottom-8 right-8 w-14 h-14 bg-gradient-to-br text-white rounded-2xl shadow-2xl flex items-center justify-center hover:scale-110 transition-all z-40 ${isLecturer ? 'from-emerald-600 to-teal-600 shadow-emerald-500/30 hover:shadow-emerald-500/40' : 'from-indigo-600 to-teal-600 shadow-indigo-500/30 hover:shadow-indigo-500/40'}`}
           title="Create Announcement"
         >
           <Plus className="w-6 h-6" />

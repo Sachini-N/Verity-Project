@@ -20,6 +20,7 @@ import Announcements from './pages/Announcements';
 import StudentProjectOverview from './pages/Module1/StudentProjectOverview';
 import StudentGlobalAssignments from './pages/Module1/StudentGlobalAssignments';
 import StudentCalendar from './pages/Module1/StudentCalendar';
+import StudentMyProjects from './pages/Module1/StudentMyProjects';
 import StudentProfile from './pages/StudentProfile';
 
 // Module 2
@@ -39,6 +40,7 @@ import LecturerGroupDashboard from './pages/Module3/LecturerGroupDashboard';
 import LecturerAssignments from './pages/Module3/LecturerAssignments';
 import GroupIntelligenceOverview from './pages/Module3/GroupIntelligenceOverview';
 import LecturerGroupMembers from './pages/Module3/LecturerGroupMembers';
+import LecturerGradingExport from './pages/Module3/LecturerGradingExport';
 import LecturerProfile from './pages/LecturerProfile';
 
 // Module 4
@@ -51,7 +53,8 @@ import SubmissionStation from './pages/Module4/SubmissionStation';
 import SubmissionReview from './pages/Module4/SubmissionReview';
 
 // Manager Portal
-import ApprovalDashboard from './pages/Manager/ApprovalDashboard';
+import ManagerDashboard from './pages/Manager/ManagerDashboard';
+import ManagerUsageLimits from './pages/Manager/ManagerUsageLimits';
 import ManagerUserDirectory from './pages/Manager/ManagerUserDirectory';
 import ManagerGroupDirectory from './pages/Manager/ManagerGroupDirectory';
 import ManagerSystemSettings from './pages/Manager/ManagerSystemSettings';
@@ -72,6 +75,7 @@ function App() {
           <Route path="projects" element={<ProjectList />} />
           <Route path="projects/new" element={<ProjectCreateForm />} />
           <Route path="assignments" element={<StudentGlobalAssignments />} />
+          <Route path="my-projects" element={<StudentMyProjects />} />
           <Route path="calendar" element={<StudentCalendar />} />
           <Route path="announcements" element={<Announcements />} />
           <Route path="profile" element={<StudentProfile />} />
@@ -115,6 +119,7 @@ function App() {
           <Route path="dashboard" element={<LecturerDashboard />} />
           <Route path="assignments" element={<LecturerAssignments />} />
           <Route path="announcements" element={<Announcements />} />
+          <Route path="export" element={<LecturerGradingExport />} />
           <Route path="profile" element={<LecturerProfile />} />
           
           {/* Main Lecturer Group List View */}
@@ -140,14 +145,16 @@ function App() {
 
         {/* ── MANAGER (ADMIN) PORTAL (/manager/*) ───────────────────── */}
         <Route path="/manager" element={<ManagerLayout />}>
-          <Route path="approvals" element={<ApprovalDashboard />} />
+          <Route path="dashboard" element={<ManagerDashboard />} />
+          <Route path="usage" element={<ManagerUsageLimits />} />
+          <Route path="approvals" element={<ManagerGroupDirectory />} />
           <Route path="users" element={<ManagerUserDirectory />} />
           <Route path="groups" element={<ManagerGroupDirectory />} />
           <Route path="modules" element={<ManagerModules />} />
           <Route path="announcements" element={<Announcements />} />
           <Route path="settings" element={<ManagerSystemSettings />} />
           
-          <Route index element={<Navigate to="approvals" replace />} />
+          <Route index element={<Navigate to="dashboard" replace />} />
         </Route>
 
         {/* ── Legacy redirect & 404 ─────────────────────────────────── */}

@@ -1,6 +1,23 @@
 import { Target, CheckCircle, Github, FileText, AlertTriangle, ArrowRight, GitCommit, GitPullRequest, Timer, Users, Activity } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Tilt from 'react-parallax-tilt';
+import { useEffect, useMemo, useState } from 'react';
+import { useParams } from 'react-router-dom';
+
+type MemberTrackingMetric = {
+  engagementScore?: number;
+};
+
+type MemberTrackingItem = {
+  userId: string;
+  name: string;
+  metrics?: MemberTrackingMetric;
+};
+
+type MemberTrackingResponse = {
+  success: boolean;
+  members?: MemberTrackingItem[];
+};
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -16,6 +33,71 @@ const itemVariants = {
 };
 
 export default function StudentProjectOverview() {
+  const { id } = useParams();
+  const [members, setMembers] = useState<MemberTrackingItem[]>([]);
+
+  useEffect(() => {
+    if (!id) {
+      setMembers([]);
+      return;
+    }
+
+    let active = true;
+
+    const fetchMembers = async () => {
+      try {
+        const resp = await fetch(`http://localhost:5000/api/project/member-tracking/${id}`);
+        if (!resp.ok) return;
+
+        const data = (await resp.json()) as MemberTrackingResponse;
+        if (!active || !data.success || !Array.isArray(data.members)) return;
+
+        setMembers(data.members);
+      } catch {
+        if (active) setMembers([]);
+      }
+    };
+
+    fetchMembers();
+
+    return () => {
+      active = false;
+    };
+  }, [id]);
+
+  const teamPeers = useMemo(() => {
+    const palette = ['text-teal-500', 'text-indigo-500', 'text-teal-500', 'text-indigo-500'];
+    const source = members.length > 0
+      ? members
+      : [
+          { userId: 'fallback-1', name: 'Team Member', metrics: { engagementScore: 0 } },
+          { userId: 'fallback-2', name: 'Team Member', metrics: { engagementScore: 0 } },
+          { userId: 'fallback-3', name: 'Team Member', metrics: { engagementScore: 0 } }
+        ];
+
+    return source.slice(0, 4).map((member, index) => {
+      const rawScore = Number(member.metrics?.engagementScore ?? 0);
+      const safeScore = Number.isFinite(rawScore) ? Math.max(0, Math.min(100, Math.round(rawScore))) : 0;
+
+      return {
+        key: member.userId || `${member.name}-${index}`,
+        name: member.name || 'Unknown Student',
+        score: safeScore,
+        color: palette[index % palette.length]
+      };
+    });
+  }, [members]);
+
+  const activityUsers = useMemo(() => {
+    const fallback = ['Member 1', 'Member 2', 'Member 3'];
+    const names = teamPeers.map((p) => p.name);
+    return {
+      a: names[0] || fallback[0],
+      b: names[1] || fallback[1],
+      c: names[2] || names[0] || fallback[2]
+    };
+  }, [teamPeers]);
+
   return (
     <motion.div 
       variants={containerVariants}
@@ -61,14 +143,14 @@ export default function StudentProjectOverview() {
       {/* Action Items Bento */}
       <motion.div variants={itemVariants} className="lg:col-span-4">
         <Tilt tiltMaxAngleX={2} tiltMaxAngleY={2} scale={1.02} transitionSpeed={2500} className="h-full block">
-          <div className="h-full p-8 rounded-[2.5rem] bg-white border border-slate-100 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.05),inset_0_1px_1px_white] flex flex-col items-center justify-center text-center group cursor-pointer hover:shadow-[0_15px_40px_-5px_rgba(244,63,94,0.1)] transition-all relative overflow-hidden">
-             <div className="absolute top-0 left-0 w-32 h-32 bg-rose-50 blur-3xl rounded-full" />
+           <div className="h-full p-8 rounded-[2.5rem] bg-white border border-slate-100 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.05),inset_0_1px_1px_white] flex flex-col items-center justify-center text-center group cursor-pointer hover:shadow-[0_15px_40px_-5px_rgba(129,140,248,0.14)] transition-all relative overflow-hidden">
+             <div className="absolute top-0 left-0 w-32 h-32 bg-indigo-50 blur-3xl rounded-full" />
              
-             <div className="relative z-10 p-5 bg-rose-50 text-rose-500 rounded-3xl mb-4 border border-rose-100 group-hover:scale-110 group-hover:rotate-6 transition-transform shadow-sm">
+             <div className="relative z-10 p-5 bg-amber-50 text-amber-600 rounded-3xl mb-4 border border-amber-100 group-hover:scale-110 group-hover:rotate-6 transition-transform shadow-sm">
                <AlertTriangle strokeWidth={2.5} className="w-10 h-10" />
              </div>
              <div className="relative z-10 text-6xl font-black text-slate-800 mb-2 tracking-tighter">1</div>
-             <div className="relative z-10 text-xs font-black text-rose-500 uppercase tracking-[0.2em] bg-white px-3 py-1 rounded-full border border-rose-100 shadow-sm">Urgent Blocker</div>
+             <div className="relative z-10 text-xs font-black text-amber-600 uppercase tracking-[0.2em] bg-white px-3 py-1 rounded-full border border-amber-100 shadow-sm">Urgent Blocker</div>
           </div>
         </Tilt>
       </motion.div>
@@ -81,7 +163,7 @@ export default function StudentProjectOverview() {
         {[
           { label: 'My Open Tasks', value: 3, icon: CheckCircle, color: 'text-teal-600', bg: 'bg-teal-50', border: 'border-teal-100' },
           { label: 'Unmerged PRs', value: 2, icon: GitPullRequest, color: 'text-indigo-600', bg: 'bg-indigo-50', border: 'border-indigo-100' },
-          { label: 'New Files', value: 5, icon: FileText, color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-100' },
+          { label: 'New Files', value: 5, icon: FileText, color: 'text-teal-600', bg: 'bg-teal-50', border: 'border-teal-100' },
         ].map(stat => (
           <motion.div variants={itemVariants} key={stat.label} className="col-span-1">
             <Tilt tiltMaxAngleX={4} tiltMaxAngleY={4} scale={1.03} transitionSpeed={2500} className="h-full block">
@@ -108,7 +190,7 @@ export default function StudentProjectOverview() {
                  <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center shadow-sm">
                     <Github className="w-5 h-5 text-indigo-500" />
                  </div>
-                 <h3 className="font-bold text-slate-800">Activity Form</h3>
+                 <h3 className="font-bold text-slate-800">Activity Feed</h3>
               </div>
               <span className="w-2 h-2 rounded-full bg-teal-400 animate-pulse shadow-[0_0_10px_rgba(45,212,191,0.5)]" />
            </div>
@@ -116,18 +198,18 @@ export default function StudentProjectOverview() {
            {/* Scrolling List */}
            <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 custom-scrollbar relative z-0">
              {[
-               { user: 'Dan', action: 'merged PR', target: '#42 Authentication', time: '10m', type: 'merge' },
-               { user: 'Shehan', action: 'pushed commit', target: 'e4f9a2b Fix layout', time: '1h', type: 'commit' },
+               { user: activityUsers.a, action: 'merged PR', target: '#42 Authentication', time: '10m', type: 'merge' },
+               { user: activityUsers.b, action: 'pushed commit', target: 'e4f9a2b Fix layout', time: '1h', type: 'commit' },
                { user: 'System', action: 'generated', target: 'Aura Weekly Report', time: '3h', type: 'system' },
-               { user: 'Pramodi', action: 'opened issue', target: 'Dark mode bug', time: '5h', type: 'issue' },
-               { user: 'Shehan', action: 'pushed commit', target: '9c2a1ff UI refactor', time: '1d', type: 'commit' },
-               { user: 'Dan', action: 'completed task', target: 'Setup Auth route', time: '2d', type: 'task' },
+               { user: activityUsers.c, action: 'opened issue', target: 'Dark mode bug', time: '5h', type: 'issue' },
+               { user: activityUsers.b, action: 'pushed commit', target: '9c2a1ff UI refactor', time: '1d', type: 'commit' },
+               { user: activityUsers.a, action: 'completed task', target: 'Setup Auth route', time: '2d', type: 'task' },
              ].map((feed, i) => (
                <div key={i} className="group p-4 rounded-2xl bg-slate-50 border border-slate-100 hover:bg-white hover:shadow-sm transition-all flex gap-4 items-start cursor-pointer">
                   <div className={`mt-0.5 shrink-0 w-8 h-8 rounded-full flex items-center justify-center border bg-white shadow-sm ${
                     feed.type === 'merge' ? 'text-indigo-500 border-indigo-100' :
                     feed.type === 'commit' ? 'text-teal-500 border-teal-100' :
-                    feed.type === 'system' ? 'text-emerald-500 border-emerald-100' :
+                    feed.type === 'system' ? 'text-teal-500 border-teal-100' :
                     'text-slate-500 border-slate-200'
                   }`}>
                      {feed.type === 'merge' ? <GitPullRequest className="w-4 h-4" /> : 
@@ -204,12 +286,8 @@ export default function StudentProjectOverview() {
            </h3>
            
            <div className="flex items-center justify-around relative z-10">
-             {[
-               { name: 'Dan', score: 92, color: 'text-teal-500' },
-               { name: 'Shehan', score: 88, color: 'text-indigo-500' },
-               { name: 'Pramodi', score: 95, color: 'text-emerald-500' },
-             ].map((peer, i) => (
-               <div key={i} className="flex flex-col items-center group/peer cursor-pointer hover:-translate-y-1 transition-transform">
+             {teamPeers.map((peer) => (
+               <div key={peer.key} className="flex flex-col items-center group/peer cursor-pointer hover:-translate-y-1 transition-transform">
                   <div className="relative w-20 h-20 flex items-center justify-center mb-4">
                      {/* SVG Ring */}
                      <svg className="absolute inset-0 w-full h-full -rotate-90 drop-shadow-sm">

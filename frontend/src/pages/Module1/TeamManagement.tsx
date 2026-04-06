@@ -10,7 +10,7 @@ export default function TeamManagement() {
 
   return (
     <div className="space-y-8">
-      <div className="flex justify-between items-center bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+      <div className="flex justify-between items-center bg-gradient-to-r from-indigo-50/70 via-white to-teal-50/40 p-6 rounded-3xl shadow-sm border border-indigo-100">
         <div>
           <h2 className="text-3xl font-black text-slate-800 tracking-tight">Team Management</h2>
           <p className="text-slate-500 font-medium text-sm mt-1">View your team members, roles, and assigned functions.</p>
@@ -21,7 +21,7 @@ export default function TeamManagement() {
         {/* Member List */}
         <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="bg-slate-50 border-b border-slate-100 text-xs text-slate-500 uppercase tracking-widest font-black">
+            <tr className="bg-indigo-50/60 border-b border-indigo-100 text-xs text-slate-500 uppercase tracking-widest font-black">
               <th className="p-5">Member Email</th>
               <th className="p-5">Role</th>
               <th className="p-5">Functions</th>
@@ -29,10 +29,10 @@ export default function TeamManagement() {
           </thead>
           <tbody>
             {members.map(m => (
-              <tr key={m.id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors last:border-none">
+              <tr key={m.id} className="border-b border-slate-50 hover:bg-indigo-50/30 transition-colors last:border-none">
                 <td className="p-5 text-slate-800 font-bold">{m.email}</td>
                 <td className="p-5">
-                  <span className={`px-3 py-1.5 text-xs font-bold rounded-full border ${m.role === 'Leader' ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-slate-100 text-slate-600 border-slate-200'}`}>
+                  <span className={`px-3 py-1.5 text-xs font-bold rounded-full border ${m.role === 'Leader' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' : 'bg-slate-100 text-slate-600 border-slate-200'}`}>
                     {m.role}
                   </span>
                 </td>

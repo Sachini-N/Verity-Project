@@ -1,4 +1,5 @@
 const axios = require('axios');
+const { recordIntegrationCall } = require('./systemMetrics');
 
 function getGithubHeaders() {
     const headers = {
@@ -19,10 +20,16 @@ function getGithubHeaders() {
 async function fetchContributorStatsWithRetry(owner, repoName) {
     const headers = getGithubHeaders();
     for (let i = 0; i < 6; i += 1) {
+        const startedAt = Date.now();
         const statsRes = await axios.get(
             `https://api.github.com/repos/${owner}/${repoName}/stats/contributors`,
             { headers, validateStatus: () => true }
         );
+        recordIntegrationCall('github', {
+            success: statsRes.status < 400,
+            statusCode: statsRes.status,
+            durationMs: Date.now() - startedAt
+        });
         if (statsRes.status === 202) {
             await new Promise((r) => setTimeout(r, 2500));
             continue;
