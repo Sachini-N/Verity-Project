@@ -1,5 +1,5 @@
 const { PrismaClient } = require('@prisma/client');
-const { notifyProjectMembers } = require('../services/notificationService');
+const { notifyProjectMembers, notifyTargetAudience } = require('../services/notificationService');
 const { addXP } = require('../services/gamificationService');
 const prisma = new PrismaClient();
 
@@ -28,14 +28,25 @@ const createAnnouncement = async (req, res) => {
     // Reward author with XP
     addXP(authorId, 'ANNOUNCEMENT_POST').catch(() => {});
 
-    // Notify all project members about the new announcement
-    notifyProjectMembers(projectId, {
-        type: 'ANNOUNCEMENT',
-        title: 'New Announcement',
-        message: `New announcement: "${title}".`,
-        link: `/student/projects/${projectId}/announcements`,
-        metadata: { announcementId: announcement.id }
-    }).catch(() => { });
+    // Trigger notification routing
+    if (projectId) {
+        notifyProjectMembers(projectId, {
+            type: 'ANNOUNCEMENT',
+            title: 'New Project Announcement',
+            message: `New announcement: "${title}".`,
+            link: `/student/projects/${projectId}/announcements`,
+            metadata: { announcementId: announcement.id }
+        }).catch(() => { });
+    } else {
+        notifyTargetAudience(targetAudience || 'All', {
+            type: 'ANNOUNCEMENT',
+            title: category === 'Urgent' ? '🚨 Urgent Announcement' : '📢 New Announcement',
+            message: `New announcement: "${title}".`,
+            link: '/dashboard', // Adjust as needed for global announcements
+            metadata: { announcementId: announcement.id },
+            excludeUserId: authorId
+        }).catch(() => { });
+    }
 };
 
 const getAnnouncements = async (req, res) => {

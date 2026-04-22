@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useSocket } from '../lib/useSocket';
+import ToastNotification from './ToastNotification';
 
 const NOTIFICATION_ICONS: Record<string, { icon: any; color: string; bg: string; border: string }> = {
     PROJECT_CREATED:       { icon: Briefcase,     color: 'text-indigo-500', bg: 'bg-indigo-50', border: 'border-indigo-100' },
@@ -67,6 +68,7 @@ export default function NotificationCenter() {
     const [isOpen, setIsOpen] = useState(false);
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);
+    const [toasts, setToasts] = useState<Notification[]>([]);
     const [loading, setLoading] = useState(false);
     const [managerTab, setManagerTab] = useState<ManagerTab>('all');
     const panelRef = useRef<HTMLDivElement>(null);
@@ -165,6 +167,22 @@ export default function NotificationCenter() {
                 if (!matchesScope(notification)) return;
                 setNotifications(prev => [notification, ...prev.slice(0, 49)]);
                 setUnreadCount(prev => prev + 1);
+                
+                setToasts(prev => [...prev, notification]);
+
+                try {
+                    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(880, ctx.currentTime);
+                    gain.gain.setValueAtTime(0.05, ctx.currentTime);
+                    osc.start();
+                    gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.3);
+                    osc.stop(ctx.currentTime + 0.3);
+                } catch(e) {}
             };
             socket.on('new_notification', handleNewNotification);
             return () => {
@@ -414,6 +432,30 @@ export default function NotificationCenter() {
                     </motion.div>
                 )}
             </AnimatePresence>
+
+            {/* Global Toasts Container */}
+            <div className="fixed bottom-6 right-6 z-[9999] flex flex-col gap-3 pointer-events-none">
+                <AnimatePresence>
+                    {toasts.map(toast => {
+                        const typeStr = String(toast.type || '').toUpperCase();
+                        let toastType: 'info' | 'success' | 'warning' | 'error' = 'info';
+                        if (typeStr.includes('APPROVED') || typeStr.includes('SYNCED')) toastType = 'success';
+                        else if (typeStr.includes('REJECTED') || typeStr.includes('ALERT') || typeStr.includes('FLAGGED')) toastType = 'error';
+                        else if (typeStr.includes('DEADLINE') || typeStr.includes('RISK') || typeStr.includes('REMOVED')) toastType = 'warning';
+
+                        return (
+                            <div key={toast.id} className="pointer-events-auto">
+                                <ToastNotification
+                                    title={toast.title}
+                                    message={toast.message}
+                                    type={toastType}
+                                    onDismiss={() => setToasts(prev => prev.filter(t => t.id !== toast.id))}
+                                />
+                            </div>
+                        );
+                    })}
+                </AnimatePresence>
+            </div>
         </div>
     );
 }

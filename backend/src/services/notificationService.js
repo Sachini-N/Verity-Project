@@ -8,7 +8,7 @@ const { getIO } = require('../config/socket');
 async function createNotification({ userId, type, title, message, link, metadata }) {
     try {
         if (!userId) return null;
-        return await prisma.notification.create({
+        const notification = await prisma.notification.create({
             data: {
                 userId,
                 type,
@@ -92,4 +92,62 @@ async function notifyByRole(role, { type, title, message, link, metadata }) {
     }
 }
 
-module.exports = { createNotification, notifyProjectMembers, notifyByRole };
+/**
+ * Notify target audience (All or specific module)
+ */
+async function notifyTargetAudience(targetAudience, { type, title, message, link, metadata, excludeUserId }) {
+    try {
+        let userIds = new Set();
+
+        if (targetAudience === 'All') {
+            const allUsers = await prisma.user.findMany({
+                where: { role: { in: ['STUDENT', 'LECTURER'] }, status: 'Active' },
+                select: { id: true }
+            });
+            allUsers.forEach(u => userIds.add(u.id));
+        } else {
+            // Target is a module code (e.g., 'SE3050')
+            const moduleData = await prisma.module.findUnique({
+                where: { code: targetAudience },
+                include: {
+                    lecturers: { select: { id: true } },
+                    semester: {
+                        include: {
+                            users: { select: { id: true }, where: { status: 'Active' } }
+                        }
+                    }
+                }
+            });
+
+            if (moduleData) {
+                moduleData.lecturers.forEach(l => userIds.add(l.id));
+                if (moduleData.semester && moduleData.semester.users) {
+                    moduleData.semester.users.forEach(s => userIds.add(s.id));
+                }
+            }
+        }
+
+        if (excludeUserId) {
+            userIds.delete(excludeUserId);
+        }
+
+        const notifications = [];
+        for (const userId of userIds) {
+            const n = await createNotification({
+                userId,
+                type,
+                title,
+                message,
+                link,
+                metadata
+            });
+            if (n) notifications.push(n);
+        }
+        return notifications;
+    } catch (error) {
+        console.error('Notify target audience error:', error.message);
+        return [];
+    }
+}
+
+module.exports = { createNotification, notifyProjectMembers, notifyByRole, notifyTargetAudience };
