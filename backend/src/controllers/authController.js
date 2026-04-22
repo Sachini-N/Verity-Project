@@ -1,6 +1,7 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const prisma = require('../config/prisma');
+const { getJwtSecret } = require('../config/auth');
 
 const register = async (req, res) => {
     try {
@@ -44,7 +45,7 @@ const registerStudent = async (req, res) => {
             }
         });
 
-        const token = jwt.sign({ id: user.id, role: user.role, email: user.email }, process.env.JWT_SECRET, { expiresIn: '1d' });
+        const token = jwt.sign({ id: user.id, role: user.role, email: user.email }, getJwtSecret(), { expiresIn: '1d' });
 
         res.status(201).json({ token, user: { id: user.id, name: user.name, email: user.email, role: user.role } });
     } catch (error) {
@@ -67,7 +68,7 @@ const registerLecturer = async (req, res) => {
             }
         });
 
-        const token = jwt.sign({ id: user.id, role: user.role, email: user.email }, process.env.JWT_SECRET, { expiresIn: '1d' });
+        const token = jwt.sign({ id: user.id, role: user.role, email: user.email }, getJwtSecret(), { expiresIn: '1d' });
 
         res.status(201).json({ token, user: { id: user.id, name: user.name, email: user.email, role: user.role } });
     } catch (error) {
@@ -86,7 +87,7 @@ const login = async (req, res) => {
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) return res.status(400).json({ message: 'Invalid credentials' });
 
-        const token = jwt.sign({ id: user.id, role: user.role, email: user.email }, process.env.JWT_SECRET, { expiresIn: '1d' });
+        const token = jwt.sign({ id: user.id, role: user.role, email: user.email }, getJwtSecret(), { expiresIn: '1d' });
 
         prisma.activityLog
             .create({
@@ -96,6 +97,7 @@ const login = async (req, res) => {
 
         res.status(200).json({ token, user: { id: user.id, name: user.name, email: user.email, role: user.role } });
     } catch (error) {
+        console.error('Auth login error:', error);
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 };
