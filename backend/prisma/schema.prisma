@@ -1,0 +1,366 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  password     String
+  role         String   @default("STUDENT") // STUDENT, LECTURER, MANAGER
+  indexNumber  String?  @unique // IT number for students
+  status       String   @default("Active") // Active, Suspended
+
+  // Profile Extensions
+  phone        String?
+  github       String?
+  linkedin     String?
+  skills       String?
+
+  // Gamification
+  xpPoints     Int      @default(0)
+  badges       String?  // Commma separated list of badge IDs
+
+  // Academic Relations
+  semesterId   String?
+  semester     Semester? @relation(fields: [semesterId], references: [id])
+  modules      Module[]  @relation("LecturerModules")
+
+  // Relations
+  projectMembers    ProjectMember[]
+  tasksAssigned     Task[]           @relation("TaskAssignee")
+  timeLogs          TimeLog[]
+  activityLogs      ActivityLog[]
+  submissions       Submission[]
+  githubMappings    GithubContributorMap[]
+  assignmentsCreated      Assignment[]
+  assignmentSubmissions   AssignmentSubmission[] @relation("StudentAssignmentSubmissions")
+  notifications           Notification[]
+  announcementReads       AnnouncementRead[]
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Year {
+  id        String     @id @default(uuid())
+  name      String     @unique // e.g., "Year 1", "Year 2"
+  semesters Semester[]
+}
+
+model Semester {
+  id     String   @id @default(uuid())
+  name   String   // e.g., "Semester 1", "Semester 2"
+  yearId String
+  year   Year     @relation(fields: [yearId], references: [id])
+  modules Module[]
+  users   User[]   // Students in this semester
+}
+
+model Module {
+  id         String   @id @default(uuid())
+  code       String   @unique // e.g., "IT1010"
+  name       String
+  semesterId String
+  semester   Semester @relation(fields: [semesterId], references: [id])
+  lecturers  User[]   @relation("LecturerModules")
+}
+
+
+model Project {
+  id          String   @id @default(uuid())
+  title       String   
+  description String
+  startDate   DateTime
+  endDate     DateTime
+  status      String   @default("Active") // Active, Archived
+
+  // Relations
+  members          ProjectMember[]
+  announcements    Announcement[]
+  sprints          Sprint[]
+  tasks            Task[]
+  riskFlags        RiskFlag[]
+  weeklyReports    WeeklyReport[]
+  githubRepos      GithubRepo[]
+  submissions      Submission[]
+  contributionScores ContributionScore[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model ProjectMember {
+  id        String   @id @default(uuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  role      String   @default("MEMBER") // LEADER, MEMBER
+
+  @@unique([projectId, userId])
+}
+
+model Announcement {
+  id        String   @id @default(uuid())
+  projectId String?  // Optional for global announcements
+  project   Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  title     String
+  content   String
+  category  String   @default("General") // Urgent, Academic, General
+  targetAudience String @default("All") // All Modules, SE3050, etc.
+  isPinned  Boolean  @default(false)
+  authorId  String   // User ID
+  attachmentUrl String?
+
+  reads     AnnouncementRead[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AnnouncementRead {
+  id             String       @id @default(uuid())
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  announcementId String
+  announcement   Announcement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+  readAt         DateTime     @default(now())
+
+  @@unique([userId, announcementId])
+}
+
+model Sprint {
+  id        String   @id @default(uuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  name      String
+  startDate DateTime
+  endDate   DateTime
+
+  tasks     Task[]
+}
+
+model Task {
+  id          String   @id @default(uuid())
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  sprintId    String?
+  sprint      Sprint?  @relation(fields: [sprintId], references: [id])
+  title       String
+  description String?
+  assigneeId  String?
+  assignee    User?    @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  deadline    DateTime?
+  priority    String   @default("Medium") // Low, Medium, High
+  status      String   @default("To Do") // To Do, In Progress, Review, Done
+  completedAt DateTime?
+
+  statusLogs  TaskStatusLog[]
+  timeLogs    TimeLog[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model TaskStatusLog {
+  id        String   @id @default(uuid())
+  taskId    String
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  oldStatus String
+  newStatus String
+  changedBy String // User ID
+
+  createdAt DateTime @default(now())
+}
+
+model TimeLog {
+  id        String   @id @default(uuid())
+  taskId    String
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  hours     Float    // Validated to be max 24 per day
+  logDate   DateTime @default(now())
+  
+  createdAt DateTime @default(now())
+}
+
+model ActivityLog {
+  id        String   @id @default(uuid())
+  projectId String?  
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  type      String   // LOGIN, TASK_UPDATE, TIME_LOG, GITHUB_COMMIT, WEEKLY_REPORT
+  details   String?
+
+  createdAt DateTime @default(now())
+}
+
+model RiskFlag {
+  id        String   @id @default(uuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  type      String   // Low Engagement, Uneven Contribution, Last-Minute Risk, Missing Weekly Report
+  message   String
+  isResolved Boolean @default(false)
+
+  createdAt DateTime @default(now())
+}
+
+model WeeklyReport {
+  id          String   @id @default(uuid())
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  weekNumber  Int
+  content     String
+  submittedBy String // User ID
+  status      String   @default("Pending") // Pending, Reviewed
+  feedback    String?
+  grade       String?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model ContributionScore {
+  id        String   @id @default(uuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  userId    String
+  score     Float    // 0 to 100
+  breakdown Json?    
+
+  evaluatedAt DateTime @default(now())
+
+  @@unique([projectId, userId])
+}
+
+model GithubRepo {
+  id        String   @id @default(uuid())
+  projectId String   @unique
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  owner     String
+  repoName  String
+  url       String
+  /// Normalized "owner/repo" (lowercase) — a GitHub repo can only be linked to one Verity project
+  repoFullName String @unique
+
+  commits   GithubCommit[]
+}
+
+model GithubCommit {
+  id            String   @id @default(uuid())
+  githubRepoId  String
+  githubRepo    GithubRepo @relation(fields: [githubRepoId], references: [id], onDelete: Cascade)
+  commitHash    String   @unique
+  authorName    String
+  authorEmail   String
+  message       String
+  date          DateTime
+
+  createdAt     DateTime @default(now())
+}
+
+model GithubContributorMap {
+  id            String   @id @default(uuid())
+  userId        String?
+  user          User?    @relation(fields: [userId], references: [id]) 
+  githubEmail   String   @unique
+}
+
+model Submission {
+  id          String   @id @default(uuid())
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  uploaderId  String
+  uploader    User     @relation(fields: [uploaderId], references: [id])
+  filePath    String
+  originalName String
+  version     Int      @default(1)
+  status      String   @default("Draft") // Draft, Submitted, Under Review, Approved, Rejected
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Assignment {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  moduleCode  String
+  moduleName  String?
+  deadline    DateTime
+  format      String
+  maxSizeMB   Int      @default(50)
+  status      String   @default("Active")
+  createdById String
+  createdBy   User     @relation(fields: [createdById], references: [id])
+
+  assignmentSubmissions AssignmentSubmission[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model AssignmentSubmission {
+  id            String     @id @default(uuid())
+  assignmentId  String
+  assignment    Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  studentId     String
+  student       User       @relation("StudentAssignmentSubmissions", fields: [studentId], references: [id])
+  fileName      String
+  filePath      String
+  submissionMessage String?
+  late          Boolean    @default(false)
+
+  // AI & Plagiarism Check Results
+  extractedText     String?
+  aiScore           Float?       // 0-100, probability of AI-generated
+  plagiarismScore   Float?       // 0-100, highest similarity with another submission
+  riskCategory      String?      // "Low", "Medium", "High"
+  checkStatus       String       @default("Pending")  // Pending, Processing, Completed, Failed, Skipped
+  checkedAt         DateTime?
+
+  matchesA          PlagiarismMatch[] @relation("MatchA")
+  matchesB          PlagiarismMatch[] @relation("MatchB")
+
+  submittedAt   DateTime   @default(now())
+}
+
+model PlagiarismMatch {
+  id              String   @id @default(uuid())
+  assignmentId    String
+  submissionAId   String
+  submissionBId   String
+  similarityScore Float    // 0-100
+  submissionA     AssignmentSubmission @relation("MatchA", fields: [submissionAId], references: [id], onDelete: Cascade)
+  submissionB     AssignmentSubmission @relation("MatchB", fields: [submissionBId], references: [id], onDelete: Cascade)
+  createdAt       DateTime @default(now())
+
+  @@unique([submissionAId, submissionBId])
+}
+
+model Notification {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type        String   // TASK_ASSIGNED, PROJECT_APPROVED, ANNOUNCEMENT, etc.
+  title       String
+  message     String
+  link        String?
+  isRead      Boolean  @default(false)
+  metadata    Json?
+
+  createdAt   DateTime @default(now())
+}
+
+model SystemSetting {
+  id    String @id @default("GLOBAL")
+  data  Json
+}
