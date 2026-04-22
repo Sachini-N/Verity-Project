@@ -225,7 +225,6 @@ async function syncRiskFlagsToDb(projectId, detectedAnomalies, project) {
             });
             
             if (anomaly.severity === 'high') {
-                await notifyByRole('LECTURER', { type: 'high_risk', title: `High Severity AI Risk detected for group ${project.title}: ${anomaly.title}`, message: anomaly.description, link: `/lecturer/projects/${projectId}/intelligence`, metadata: {} }).catch(()=>{});
                 await notifyByRole('MANAGER', { type: 'high_risk', title: `High Severity AI Risk detected for group ${project.title}: ${anomaly.title}`, message: anomaly.description, link: `/manager/groups`, metadata: {} }).catch(()=>{});
             }
         }
@@ -236,8 +235,15 @@ async function syncRiskFlagsToDb(projectId, detectedAnomalies, project) {
     });
 
     return finalUnresolved.map(f => {
-        const words = f.message.split(' ');
-        const nameGuess = words[0]; 
+        let nameGuess = 'System';
+        if (project && project.members) {
+            for (const member of project.members) {
+                if (member.user && f.message.includes(member.user.name)) {
+                    nameGuess = member.user.name;
+                    break;
+                }
+            }
+        } 
         return {
             id: f.id,
             severity: f.type.toLowerCase().includes('high') || f.message.toLowerCase().includes('high') ? 'high' : 'medium',

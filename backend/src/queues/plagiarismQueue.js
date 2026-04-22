@@ -49,18 +49,36 @@ const worker = new Worker('plagiarism-check-queue', async job => {
         // 2. AI Check
         const { aiScore } = await detectAIContent(text);
 
-        // 3. Plagiarism Check
-        const existingSubmissions = await prisma.assignmentSubmission.findMany({
-            where: {
-                assignmentId,
-                id: { not: submissionId },
-                extractedText: { not: null }
-            },
-            select: { id: true, extractedText: true }
-        });
+        // 3. Plagiarism Check (Batch processing to prevent OOM)
+        const batchSize = 20;
+        let skip = 0;
+        let allMatches = [];
+        let maxPlagiarismScore = 0;
 
-        const { plagiarismScore, matches } = checkPlagiarism(text, existingSubmissions);
-        const riskCategory = getRiskCategory(aiScore, plagiarismScore);
+        while (true) {
+            const existingSubmissions = await prisma.assignmentSubmission.findMany({
+                where: {
+                    assignmentId,
+                    id: { not: submissionId },
+                    extractedText: { not: null }
+                },
+                select: { id: true, extractedText: true },
+                skip: skip,
+                take: batchSize
+            });
+
+            if (existingSubmissions.length === 0) break;
+
+            const { plagiarismScore, matches } = checkPlagiarism(text, existingSubmissions);
+            if (plagiarismScore > maxPlagiarismScore) {
+                maxPlagiarismScore = plagiarismScore;
+            }
+            allMatches.push(...matches);
+
+            skip += batchSize;
+        }
+
+        const riskCategory = getRiskCategory(aiScore, maxPlagiarismScore);
 
         // 4. Update DB
         const updatedSubmission = await prisma.assignmentSubmission.update({
@@ -68,15 +86,15 @@ const worker = new Worker('plagiarism-check-queue', async job => {
             data: {
                 extractedText: text,
                 aiScore,
-                plagiarismScore,
+                plagiarismScore: maxPlagiarismScore,
                 riskCategory,
                 checkStatus: 'Completed',
                 checkedAt: new Date()
             }
         });
 
-        if (matches && matches.length > 0) {
-            for (const match of matches) {
+        if (allMatches && allMatches.length > 0) {
+            for (const match of allMatches) {
                 await prisma.plagiarismMatch.create({
                     data: {
                         assignmentId,
@@ -95,7 +113,7 @@ const worker = new Worker('plagiarism-check-queue', async job => {
                 submissionId,
                 status: 'Completed',
                 aiScore,
-                plagiarismScore,
+                plagiarismScore: maxPlagiarismScore,
                 riskCategory
             });
         } catch (e) {
@@ -113,6 +131,27 @@ const worker = new Worker('plagiarism-check-queue', async job => {
             where: { id: submissionId },
             data: { checkStatus: 'Failed' }
         });
+
+        // Notify student about failure
+        try {
+            const submission = await prisma.assignmentSubmission.findUnique({
+                where: { id: submissionId },
+                select: { studentId: true, assignment: { select: { title: true } } }
+            });
+            if (submission) {
+                const { createNotification } = require('../services/notificationService');
+                await createNotification({
+                    userId: submission.studentId,
+                    type: 'SYSTEM_ALERT',
+                    title: 'Analysis Failed',
+                    message: `We encountered an error analyzing your submission for "${submission.assignment.title}". Please try re-uploading.`,
+                    link: '/student/assignments',
+                    metadata: { submissionId }
+                });
+            }
+        } catch (notifErr) {
+            console.error('Failed to send failure notification', notifErr);
+        }
         
         try {
             const io = getIO();

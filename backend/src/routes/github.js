@@ -117,7 +117,7 @@ function buildImpactsFromDbCommits(dbCommits, userGithubMap, systemUsers) {
             ? systemUsers.find((u) => (u.email || '').toLowerCase() === emailLower)
             : null;
         const matched = matchByGithub || matchByEmail;
-        const key = noreplyLogin || emailLower || (c.authorName || '').toLowerCase() || 'unknown';
+        const key = matched ? matched.id : (noreplyLogin || emailLower || (c.authorName || '').toLowerCase() || 'unknown');
 
         if (!groups.has(key)) {
             groups.set(key, {
@@ -412,7 +412,9 @@ router.get('/repo/:projectId', async (req, res) => {
         let finalImpacts = [];
 
         if (githubStats.length > 0) {
-            const impacts = githubStats.map((stat) => {
+            const impactsMap = new Map();
+
+            githubStats.forEach((stat) => {
                 const login = stat.author?.login || '';
                 let userAdditions = 0;
                 let userDeletions = 0;
@@ -428,18 +430,25 @@ router.get('/repo/:projectId', async (req, res) => {
                 totalCommits += userCommits;
 
                 const matchedUser = userGithubMap.find((u) => u.githubLogin === login.toLowerCase());
+                const key = matchedUser ? matchedUser.id : login;
 
-                return {
-                    login,
-                    name: matchedUser ? matchedUser.name : login,
-                    isMatched: !!matchedUser,
-                    commits: userCommits,
-                    additions: userAdditions,
-                    deletions: userDeletions
-                };
+                if (!impactsMap.has(key)) {
+                    impactsMap.set(key, {
+                        login,
+                        name: matchedUser ? matchedUser.name : login,
+                        isMatched: !!matchedUser,
+                        commits: 0,
+                        additions: 0,
+                        deletions: 0
+                    });
+                }
+                const entry = impactsMap.get(key);
+                entry.commits += userCommits;
+                entry.additions += userAdditions;
+                entry.deletions += userDeletions;
             });
 
-            finalImpacts = impacts
+            finalImpacts = Array.from(impactsMap.values())
                 .map((imp) => ({
                     ...imp,
                     percentage: totalCommits > 0 ? Math.round((imp.commits / totalCommits) * 100) : 0
@@ -452,9 +461,23 @@ router.get('/repo/:projectId', async (req, res) => {
 
         // 5. Enhance Commits with branch info and match them to students
         const enhancedCommits = recentCommits.map(commit => {
-            // Find the student by email if possible (as fallback) or if they matched login upstream
+            const noreplyLogin = loginFromNoreplyEmail(commit.authorEmail);
+            const emailLower = (commit.authorEmail || '').toLowerCase();
+            
+            const matchByGithub = noreplyLogin
+                ? userGithubMap.find((u) => u.githubLogin === noreplyLogin)
+                : null;
+            const matchByEmail = emailLower
+                ? userGithubMap.find((u) => (u.email || '').toLowerCase() === emailLower)
+                : null;
+                
+            const matchedUser = matchByGithub || matchByEmail;
+            
             return {
-                ...commit
+                ...commit,
+                isMatched: !!matchedUser,
+                matchedUserName: matchedUser ? matchedUser.name : null,
+                matchedUserId: matchedUser ? matchedUser.id : null
             };
         });
 
